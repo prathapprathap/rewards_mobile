@@ -68,6 +68,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
           },
           onWebResourceError: (error) {
             debugPrint('❌ WebView Error: ${error.description}');
+            if (_shouldOpenInBrowserAfterError(error.description)) {
+              _openOfferExternally(_currentUrl ?? widget.url);
+              return;
+            }
             if (!mounted) return;
             setState(() {
               _isPageLoading = false;
@@ -110,15 +114,52 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   void _handleTimeout() {
     if (_isRedirected || !_isPageLoading) return;
-    // If it takes too long, just open in external browser as fallback
-    launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication);
-    if (mounted) Navigator.pop(context, false);
+    _openOfferExternally(widget.url);
   }
 
   bool _shouldOpenExternally(String url) {
     return url.startsWith('market://') ||
         url.startsWith('intent://') ||
         url.contains('play.google.com/store/apps/details');
+  }
+
+  bool _shouldOpenInBrowserAfterError(String? description) {
+    final message = (description ?? '').toLowerCase();
+    return message.contains('err_blocked_by_orb') ||
+        message.contains('err_unknown_url_scheme');
+  }
+
+  Future<void> _openOfferExternally(String url) async {
+    if (_isRedirected) return;
+    if (mounted) {
+      setState(() {
+        _isRedirected = true;
+        _isPageLoading = false;
+      });
+    }
+
+    try {
+      final launched = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!mounted) return;
+      if (launched) {
+        Navigator.pop(context, true);
+        return;
+      }
+
+      setState(() {
+        _isRedirected = false;
+        _errorMessage = 'Could not open this offer in your browser.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isRedirected = false;
+        _errorMessage = 'Could not open this offer in your browser.';
+      });
+    }
   }
 
   Future<void> _launchStore(String url) async {
@@ -227,10 +268,24 @@ class _WebViewScreenState extends State<WebViewScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () =>
-                              _controller.loadRequest(Uri.parse(widget.url)),
-                          child: const Text('Retry'),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () => _controller.loadRequest(
+                                Uri.parse(widget.url),
+                              ),
+                              child: const Text('Retry'),
+                            ),
+                            OutlinedButton(
+                              onPressed: () => _openOfferExternally(
+                                _currentUrl ?? widget.url,
+                              ),
+                              child: const Text('Open in Browser'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
