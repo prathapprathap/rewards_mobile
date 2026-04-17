@@ -54,7 +54,7 @@ class ApiService {
       throw Exception('Error fetching profile: $e');
     }
   }
-  
+
   Future<List<dynamic>> getUserOffers(int userId) async {
     try {
       final response = await http.get(
@@ -102,9 +102,12 @@ class ApiService {
       throw Exception('Error fetching tasks: $e');
     }
   }
+
   Future<Map<String, dynamic>> getUserSpins(int userId) async {
     try {
-      final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/spins'));
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId/spins'),
+      );
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -118,7 +121,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> useSpin(int userId) async {
     try {
-      final response = await http.post(Uri.parse('${ApiConstants.baseUrl}/users/$userId/use-spin'));
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId/use-spin'),
+      );
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -132,7 +137,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> getAppSettings() async {
     try {
-      final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/users/app/settings'));
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/users/app/settings'),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> settingsList = jsonDecode(response.body);
@@ -159,7 +166,9 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception(jsonDecode(response.body)['message'] ?? 'Failed to redeem code');
+      throw Exception(
+        jsonDecode(response.body)['message'] ?? 'Failed to redeem code',
+      );
     }
   }
 
@@ -172,6 +181,22 @@ class ApiService {
     } else {
       throw Exception('Failed to get referral stats');
     }
+  }
+
+  Future<Map<String, dynamic>> applyReferralCode(
+    int userId,
+    String code,
+  ) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/users/$userId/apply-referral'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'referral_code': code}),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      return data;
+    }
+    throw Exception(data['message'] ?? 'Failed to apply referral code');
   }
 
   // ── Device ID ──────────────────────────────────────────────────────────────
@@ -202,7 +227,9 @@ class ApiService {
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        return data.map((e) => Offer.fromJson(e as Map<String, dynamic>)).toList();
+        return data
+            .map((e) => Offer.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception('Failed to load offerwall offers');
       }
@@ -223,7 +250,9 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List<dynamic> events = data['events'] ?? [];
-        return events.map((e) => OfferEvent.fromJson(e as Map<String, dynamic>)).toList();
+        return events
+            .map((e) => OfferEvent.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception('Failed to load offer events');
       }
@@ -299,10 +328,15 @@ class ApiService {
   }
 
   /// Get transaction history
-  Future<List<dynamic>> getTransactionHistory(int userId, {int limit = 50}) async {
+  Future<List<dynamic>> getTransactionHistory(
+    int userId, {
+    int limit = 50,
+  }) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/offer18/transactions/$userId?limit=$limit'),
+        Uri.parse(
+          '${ApiConstants.baseUrl}/offer18/transactions/$userId?limit=$limit',
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -317,7 +351,7 @@ class ApiService {
   }
 
   // Scratch Card Methods
-  
+
   /// Get random scratchable offer for user
   Future<Map<String, dynamic>> getScratchableOffer(int userId) async {
     try {
@@ -336,15 +370,15 @@ class ApiService {
   }
 
   /// Mark offer as scratched
-  Future<Map<String, dynamic>> markOfferScratched(int userId, int offerId) async {
+  Future<Map<String, dynamic>> markOfferScratched(
+    int userId,
+    int offerId,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('${ApiConstants.baseUrl}/scratch/scratched'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'userId': userId,
-          'offerId': offerId,
-        }),
+        body: jsonEncode({'userId': userId, 'offerId': offerId}),
       );
 
       if (response.statusCode == 200) {

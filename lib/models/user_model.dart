@@ -6,6 +6,7 @@ class User {
   final String? profilePic;
   final String? deviceId;
   final String? referralCode;
+  final String? referredBy;
   final double walletBalance;
   final double totalEarnings;
   final String? upiId;
@@ -18,6 +19,7 @@ class User {
     this.profilePic,
     this.deviceId,
     this.referralCode,
+    this.referredBy,
     required this.walletBalance,
     this.totalEarnings = 0.0,
     this.upiId,
@@ -32,8 +34,10 @@ class User {
       profilePic: json['profile_pic'],
       deviceId: json['device_id'],
       referralCode: json['referral_code'],
+      referredBy: json['referred_by'],
       walletBalance: double.tryParse(json['wallet_balance'].toString()) ?? 0.0,
-      totalEarnings: double.tryParse(json['total_earnings']?.toString() ?? '0') ?? 0.0,
+      totalEarnings:
+          double.tryParse(json['total_earnings']?.toString() ?? '0') ?? 0.0,
       upiId: json['upi_id'],
     );
   }
@@ -46,6 +50,8 @@ class User {
       'name': name,
       'profile_pic': profilePic,
       'device_id': deviceId,
+      'referral_code': referralCode,
+      'referred_by': referredBy,
       'wallet_balance': walletBalance,
       'total_earnings': totalEarnings,
       'upi_id': upiId,
