@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../constants/colors.dart';
+import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/reward_dialog.dart';
+import '../widgets/app_dialog.dart';
+import '../widgets/wallet_symbol_icon.dart';
 
 import 'daily_checkin_screen.dart';
 import 'offerwall_screen.dart';
@@ -21,7 +23,7 @@ class ExtraScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          _buildAppBar(),
+          _buildAppBar(context),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -40,7 +42,7 @@ class ExtraScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
       floating: true,
       backgroundColor: AppColors.background,
@@ -57,13 +59,14 @@ class ExtraScreen extends StatelessWidget {
                 BoxShadow(
                   color: AppColors.primary.withOpacity(0.1),
                   blurRadius: 10,
-                )
+                ),
               ],
             ),
             child: Image.asset(
               'assets/images/logo.png',
               height: 24,
-              errorBuilder: (c, e, s) => Icon(Icons.eco, color: AppColors.primary, size: 24),
+              errorBuilder: (c, e, s) =>
+                  Icon(Icons.eco, color: AppColors.primary, size: 24),
             ),
           ),
           const SizedBox(width: 12),
@@ -78,10 +81,7 @@ class ExtraScreen extends StatelessWidget {
           ),
         ],
       ),
-      actions: [
-        _buildWalletPill(context),
-        const SizedBox(width: 16),
-      ],
+      actions: [_buildWalletPill(context), const SizedBox(width: 16)],
     );
   }
 
@@ -104,11 +104,7 @@ class ExtraScreen extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/coin.png',
-            height: 20,
-            errorBuilder: (c, e, s) => Icon(Icons.monetization_on, color: AppColors.coinGold, size: 20),
-          ),
+          const WalletSymbolIcon(size: 20),
           const SizedBox(width: 8),
           Text(
             (user?.walletBalance ?? 0.00).toStringAsFixed(2),
@@ -186,7 +182,10 @@ class ExtraScreen extends StatelessWidget {
           title: 'Offerwalls',
           subtitle: 'Complete premium offers from wall',
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const OfferwallScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const OfferwallScreen()),
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -196,7 +195,10 @@ class ExtraScreen extends StatelessWidget {
           title: 'Special Code',
           subtitle: 'Enter secret code to claim rewards',
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SpecialCodeScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SpecialCodeScreen()),
+            );
           },
         ),
       ],

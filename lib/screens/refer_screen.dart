@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/wallet_symbol_icon.dart';
 
 class ReferScreen extends StatefulWidget {
   const ReferScreen({super.key});
@@ -53,7 +55,9 @@ class _ReferScreenState extends State<ReferScreen> {
     Provider.of<SettingsProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
-    final referralCode = user?.referralCode ?? (user?.id != null ? 'REWARD${user!.id}' : 'T973WC');
+    final referralCode =
+        user?.referralCode ??
+        (user?.id != null ? 'REWARD${user!.id}' : 'T973WC');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -71,37 +75,52 @@ class _ReferScreenState extends State<ReferScreen> {
                   const SizedBox(height: 24),
                   _buildReferralCodeCard(context, referralCode),
                   const SizedBox(height: 24),
-                  
+
                   // Stats Section
                   Row(
                     children: [
-                      Expanded(child: _buildStatCard('REFERRALS', _stats['total_referrals'].toString(), Icons.people_rounded)),
+                      Expanded(
+                        child: _buildStatCard(
+                          'REFERRALS',
+                          _stats['total_referrals'].toString(),
+                          Icons.people_rounded,
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Expanded(child: _buildStatCard('EARNINGS', '₹${_stats['total_commission']}', Icons.account_balance_wallet_rounded)),
+                      Expanded(
+                        child: _buildStatCard(
+                          'EARNINGS',
+                          '₹${_stats['total_commission']}',
+                          Icons.account_balance_wallet_rounded,
+                        ),
+                      ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 32),
                   _buildMissionTitle('THE REFERRAL MISSION'),
                   const SizedBox(height: 20),
                   _buildMissionStep(
                     phase: 'PHASE 01',
                     title: 'DEPLOY INVITE',
-                    description: 'SHARE YOUR UNIQUE LINK WITH YOUR SQUAD VIA WHATSAPP OR SOCIALS.',
+                    description:
+                        'SHARE YOUR UNIQUE LINK WITH YOUR SQUAD VIA WHATSAPP OR SOCIALS.',
                     icon: Icons.share_outlined,
                   ),
                   const SizedBox(height: 16),
                   _buildMissionStep(
                     phase: 'PHASE 02',
                     title: 'SQUAD JOINS',
-                    description: 'YOUR FRIENDS JOIN THE PLATFORM USING YOUR LINK AND VERIFY PROFILE.',
+                    description:
+                        'YOUR FRIENDS JOIN THE PLATFORM USING YOUR LINK AND VERIFY PROFILE.',
                     icon: Icons.people_outline,
                   ),
                   const SizedBox(height: 16),
                   _buildMissionStep(
                     phase: 'PHASE 03',
                     title: '1ST COMPLETION',
-                    description: 'FRIEND COMPLETES THEIR FIRST OFFER. YOU GET REWARDS INSTANTLY!',
+                    description:
+                        'FRIEND COMPLETES THEIR FIRST OFFER. YOU GET REWARDS INSTANTLY!',
                     icon: Icons.check_circle_outline,
                   ),
                   const SizedBox(height: 120), // Bottom padding
@@ -133,7 +152,8 @@ class _ReferScreenState extends State<ReferScreen> {
             child: Image.asset(
               'assets/images/logo.png',
               height: 24,
-              errorBuilder: (c, e, s) => Icon(Icons.eco, color: AppColors.primary, size: 24),
+              errorBuilder: (c, e, s) =>
+                  Icon(Icons.eco, color: AppColors.primary, size: 24),
             ),
           ),
           const SizedBox(width: 12),
@@ -148,10 +168,7 @@ class _ReferScreenState extends State<ReferScreen> {
           ),
         ],
       ),
-      actions: [
-        _buildWalletPill(user),
-        const SizedBox(width: 16),
-      ],
+      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
     );
   }
 
@@ -173,11 +190,7 @@ class _ReferScreenState extends State<ReferScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/coin.png',
-            height: 20,
-            errorBuilder: (c, e, s) => Icon(Icons.monetization_on, color: AppColors.coinGold, size: 20),
-          ),
+          const WalletSymbolIcon(size: 20),
           const SizedBox(width: 8),
           Text(
             (user?.walletBalance ?? 0.00).toStringAsFixed(2),
@@ -249,9 +262,9 @@ class _ReferScreenState extends State<ReferScreen> {
           GestureDetector(
             onTap: () {
               Clipboard.setData(ClipboardData(text: code));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Code Copied!')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Code Copied!')));
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -336,7 +349,9 @@ class _ReferScreenState extends State<ReferScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(child: Divider(color: AppColors.onSurfaceVariant.withOpacity(0.1))),
+        Expanded(
+          child: Divider(color: AppColors.onSurfaceVariant.withOpacity(0.1)),
+        ),
       ],
     );
   }
@@ -421,7 +436,9 @@ class _ReferScreenState extends State<ReferScreen> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
-                Share.share('Use my referral code $code to join Peward and earn unlimited rewards!');
+                Share.share(
+                  'Use my referral code $code to join Peward and earn unlimited rewards!',
+                );
               },
               icon: const Icon(Icons.chat_bubble_rounded),
               label: Text(
@@ -447,7 +464,9 @@ class _ReferScreenState extends State<ReferScreen> {
           const SizedBox(width: 12),
           GestureDetector(
             onTap: () {
-              Share.share('Join Peward using my code $code and earn cash daily!');
+              Share.share(
+                'Join Peward using my code $code and earn cash daily!',
+              );
             },
             child: Container(
               padding: const EdgeInsets.all(16),

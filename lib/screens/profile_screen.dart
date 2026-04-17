@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
+import '../widgets/wallet_symbol_icon.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -59,7 +60,8 @@ class ProfileScreen extends StatelessWidget {
             child: Image.asset(
               'assets/images/logo.png',
               height: 24,
-              errorBuilder: (c, e, s) => Icon(Icons.eco, color: AppColors.primary, size: 24),
+              errorBuilder: (c, e, s) =>
+                  Icon(Icons.eco, color: AppColors.primary, size: 24),
             ),
           ),
           const SizedBox(width: 12),
@@ -74,10 +76,7 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      actions: [
-        _buildWalletPill(user),
-        const SizedBox(width: 16),
-      ],
+      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
     );
   }
 
@@ -99,11 +98,7 @@ class ProfileScreen extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/coin.png',
-            height: 20,
-            errorBuilder: (c, e, s) => Icon(Icons.monetization_on, color: AppColors.coinGold, size: 20),
-          ),
+          const WalletSymbolIcon(size: 20),
           const SizedBox(width: 8),
           Text(
             (user?.walletBalance ?? 0.00).toStringAsFixed(2),
@@ -139,7 +134,11 @@ class ProfileScreen extends StatelessWidget {
             ? Image.network(user!.profilePic!, fit: BoxFit.cover)
             : Container(
                 color: AppColors.background,
-                child: Icon(Icons.person_rounded, color: AppColors.primary, size: 60),
+                child: Icon(
+                  Icons.person_rounded,
+                  color: AppColors.primary,
+                  size: 60,
+                ),
               ),
       ),
     );
@@ -160,7 +159,10 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildContactInfo(dynamic user) {
     return Column(
       children: [
-        _buildInfoPill(Icons.email_outlined, user?.email ?? 'prathapshanmugam5@gmail.com'),
+        _buildInfoPill(
+          Icons.email_outlined,
+          user?.email ?? 'prathapshanmugam5@gmail.com',
+        ),
         const SizedBox(height: 12),
         _buildInfoPill(Icons.phone_outlined, '9345749329'),
       ],
@@ -174,16 +176,17 @@ class ProfileScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: AppColors.onSurfaceVariant.withOpacity(0.5)),
+          Icon(
+            icon,
+            size: 18,
+            color: AppColors.onSurfaceVariant.withOpacity(0.5),
+          ),
           const SizedBox(width: 10),
           Text(
             text,
@@ -232,7 +235,10 @@ class ProfileScreen extends StatelessWidget {
             iconColor: Colors.green,
             label: 'WHATSAPP CHANNEL',
             onTap: () async {
-              final settings = Provider.of<SettingsProvider>(context, listen: false);
+              final settings = Provider.of<SettingsProvider>(
+                context,
+                listen: false,
+              );
               final url = settings.getString('whatsapp_link', '');
               if (url.isNotEmpty) {
                 final uri = Uri.parse(url);
@@ -246,7 +252,10 @@ class ProfileScreen extends StatelessWidget {
             iconColor: Colors.blue,
             label: 'JOIN TELEGRAM',
             onTap: () async {
-              final settings = Provider.of<SettingsProvider>(context, listen: false);
+              final settings = Provider.of<SettingsProvider>(
+                context,
+                listen: false,
+              );
               final url = settings.getString('telegram_link', '');
               if (url.isNotEmpty) {
                 final uri = Uri.parse(url);
@@ -294,9 +303,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         content: Text(
           'Are you sure you want to logout?',
-          style: GoogleFonts.inter(
-            color: AppColors.onSurfaceVariant,
-          ),
+          style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
         ),
         actions: [
           TextButton(
@@ -316,7 +323,10 @@ class ProfileScreen extends StatelessWidget {
                 await GoogleSignIn.instance.signOut();
               } catch (_) {}
               if (context.mounted) {
-                Provider.of<SettingsProvider>(context, listen: false).loadSettings();
+                Provider.of<SettingsProvider>(
+                  context,
+                  listen: false,
+                ).loadSettings();
                 Provider.of<UserProvider>(context, listen: false).logout();
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -386,7 +396,11 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
           ],
         ),
       ),

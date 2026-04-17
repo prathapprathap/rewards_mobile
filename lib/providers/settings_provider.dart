@@ -14,17 +14,17 @@ class SettingsProvider with ChangeNotifier {
     try {
       final api = ApiService();
       _settings = await api.getAppSettings();
-      
+
       // Update dynamic colors if present
       if (_settings.containsKey('primary_color')) {
         final colorHex = _settings['primary_color'].toString();
         AppColors.updateColors(colorHex);
-        
+
         // Cache for next launch
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('cached_primary_color', colorHex);
       }
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {

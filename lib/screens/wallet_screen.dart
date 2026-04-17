@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/wallet_symbol_icon.dart';
 import 'withdrawal_screen.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -29,10 +31,10 @@ class _WalletScreenState extends State<WalletScreen> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final userId = userProvider.user?.id;
       if (userId == null) return;
-      
+
       final api = ApiService();
       final transactions = await api.getTransactionHistory(userId);
-      
+
       if (mounted) {
         setState(() {
           _transactions = transactions;
@@ -96,7 +98,8 @@ class _WalletScreenState extends State<WalletScreen> {
             child: Image.asset(
               'assets/images/logo.png',
               height: 24,
-              errorBuilder: (c, e, s) => Icon(Icons.eco, color: AppColors.primary, size: 24),
+              errorBuilder: (c, e, s) =>
+                  Icon(Icons.eco, color: AppColors.primary, size: 24),
             ),
           ),
           const SizedBox(width: 12),
@@ -111,10 +114,7 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
         ],
       ),
-      actions: [
-        _buildWalletPill(user),
-        const SizedBox(width: 16),
-      ],
+      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
     );
   }
 
@@ -136,11 +136,7 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/coin.png',
-            height: 20,
-            errorBuilder: (c, e, s) => Icon(Icons.monetization_on, color: AppColors.coinGold, size: 20),
-          ),
+          const WalletSymbolIcon(size: 20),
           const SizedBox(width: 8),
           Text(
             (user?.walletBalance ?? 0.00).toStringAsFixed(2),
@@ -185,11 +181,7 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/images/coin.png',
-                height: 48,
-                errorBuilder: (c, e, s) => Icon(Icons.monetization_on, color: AppColors.primary, size: 48),
-              ),
+              WalletSymbolIcon(size: 48, fallbackColor: AppColors.primary),
               const SizedBox(width: 12),
               Text(
                 balance.toStringAsFixed(2),
@@ -251,19 +243,24 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
         ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: _buildTabItem('EARNINGS', _isEarningsTab, () => setState(() => _isEarningsTab = true)),
+            child: _buildTabItem(
+              'EARNINGS',
+              _isEarningsTab,
+              () => setState(() => _isEarningsTab = true),
+            ),
           ),
           Expanded(
-            child: _buildTabItem('MY REDEEMS', !_isEarningsTab, () => setState(() => _isEarningsTab = false)),
+            child: _buildTabItem(
+              'MY REDEEMS',
+              !_isEarningsTab,
+              () => setState(() => _isEarningsTab = false),
+            ),
           ),
         ],
       ),
@@ -285,7 +282,9 @@ class _WalletScreenState extends State<WalletScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: active ? Colors.white : AppColors.onSurfaceVariant.withOpacity(0.5),
+              color: active
+                  ? Colors.white
+                  : AppColors.onSurfaceVariant.withOpacity(0.5),
               letterSpacing: 0.5,
             ),
           ),
@@ -323,13 +322,18 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  Widget _buildTransactionsList() {
     if (_isLoading) {
       return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
-    final filteredList = _isEarningsTab 
-      ? _transactions.where((tx) => tx['transaction_type'] != 'withdrawal').toList()
-      : _transactions.where((tx) => tx['transaction_type'] == 'withdrawal').toList();
+    final filteredList = _isEarningsTab
+        ? _transactions
+              .where((tx) => tx['transaction_type'] != 'withdrawal')
+              .toList()
+        : _transactions
+              .where((tx) => tx['transaction_type'] == 'withdrawal')
+              .toList();
 
     if (filteredList.isEmpty) {
       return Center(
@@ -354,16 +358,23 @@ class _WalletScreenState extends State<WalletScreen> {
     final String type = tx['transaction_type'] ?? 'reward';
     final String description = tx['description'] ?? 'Activity reward';
     final double amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
-    final String date = tx['created_at'] != null 
-        ? tx['created_at'].toString().substring(0, 16) 
+    final String date = tx['created_at'] != null
+        ? tx['created_at'].toString().substring(0, 16)
         : 'Recently';
 
     IconData icon;
     switch (type.toLowerCase()) {
-      case 'spin': icon = Icons.refresh; break;
-      case 'referral': icon = Icons.share; break;
-      case 'withdrawal': icon = Icons.account_balance_wallet; break;
-      default: icon = Icons.card_giftcard;
+      case 'spin':
+        icon = Icons.refresh;
+        break;
+      case 'referral':
+        icon = Icons.share;
+        break;
+      case 'withdrawal':
+        icon = Icons.account_balance_wallet;
+        break;
+      default:
+        icon = Icons.card_giftcard;
     }
 
     return Container(

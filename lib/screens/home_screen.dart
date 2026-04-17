@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import 'offer_detail_screen.dart';
 import 'offerwall_screen.dart';
 import '../providers/settings_provider.dart';
+import '../widgets/wallet_symbol_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,7 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final api = ApiService();
       final trackingData = await api.trackOfferClick(
         userId: userId,
-        offerId: offer['id'] is int ? offer['id'] : int.parse(offer['id'].toString()),
+        offerId: offer['id'] is int
+            ? offer['id']
+            : int.parse(offer['id'].toString()),
         deviceId: null,
       );
       final trackingUrl = trackingData['trackingUrl'];
@@ -106,7 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const OfferwallScreen()),
+                                  MaterialPageRoute(
+                                    builder: (_) => const OfferwallScreen(),
+                                  ),
                                 );
                               },
                               child: Text(
@@ -149,13 +154,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 BoxShadow(
                   color: AppColors.primary.withOpacity(0.1),
                   blurRadius: 10,
-                )
+                ),
               ],
             ),
             child: Image.asset(
               'assets/images/logo.png',
               height: 24,
-              errorBuilder: (c, e, s) => Icon(Icons.eco, color: AppColors.primary, size: 24),
+              errorBuilder: (c, e, s) =>
+                  Icon(Icons.eco, color: AppColors.primary, size: 24),
             ),
           ),
           const SizedBox(width: 12),
@@ -171,10 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      actions: [
-        _buildWalletPill(user),
-        const SizedBox(width: 16),
-      ],
+      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
     );
   }
 
@@ -196,11 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/coin.png',
-            height: 20,
-            errorBuilder: (c, e, s) => Icon(Icons.monetization_on, color: AppColors.coinGold, size: 20),
-          ),
+          const WalletSymbolIcon(size: 20),
           const SizedBox(width: 8),
           Text(
             (user?.walletBalance ?? 0.00).toStringAsFixed(2),
@@ -238,7 +237,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             right: -20,
             bottom: -20,
-            child: Icon(Icons.card_giftcard, size: 140, color: Colors.white.withOpacity(0.15)),
+            child: Icon(
+              Icons.card_giftcard,
+              size: 140,
+              color: Colors.white.withOpacity(0.15),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -257,7 +260,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -280,11 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
             left: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildDot(true),
-                _buildDot(false),
-                _buildDot(false),
-              ],
+              children: [_buildDot(true), _buildDot(false), _buildDot(false)],
             ),
           ),
         ],
@@ -328,160 +330,174 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       child: Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: Stack(
-              children: [
-                Container(
-                  height: 160,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF0072B1), Color(0xFF00B4E0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'HOT',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              child: Stack(
+                children: [
+                  Container(
+                    height: 160,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF0072B1), Color(0xFF00B4E0)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
                   ),
-                ),
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 20),
-                    height: 120,
-                    width: 120,
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'HOT',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 20),
+                      height: 120,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.telegram,
+                        color: Colors.white,
+                        size: 60,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    left: 20,
+                    child: Column(
+                      children: [
+                        Text(
+                          'JOIN CHANNEL\nNOW',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'GET EXCLUSIVE SIGNALS AND NEWS! (TELEGRAM ICON)',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 8,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.blue.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.telegram, color: Colors.white, size: 60),
+                    child: const Icon(
+                      Icons.telegram,
+                      color: Colors.blue,
+                      size: 24,
+                    ),
                   ),
-                ),
-                Positioned(
-                  bottom: 20,
-                  right: 20,
-                  left: 20,
-                  child: Column(
-                    children: [
-                      Text(
-                        'JOIN CHANNEL\nNOW',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          height: 1.1,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Join Telegram',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'GET EXCLUSIVE SIGNALS AND NEWS! (TELEGRAM ICON)',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 8,
-                          fontWeight: FontWeight.w600,
+                        Text(
+                          'Join Rupi Rewards Telegram Channel',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.onSurfaceVariant.withOpacity(0.6),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  _buildRewardPill('+1'),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.telegram, color: Colors.blue, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Join Telegram',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      Text(
-                        'Join Rupi Rewards Telegram Channel',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildRewardPill('+1'),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildDailyTasksList() {
     final tasks = _offers.take(5).toList();
     if (tasks.isEmpty) {
       return const Center(child: Text('No tasks available'));
     }
-    return Column(
-      children: tasks.map((task) => _buildTaskItem(task)).toList(),
-    );
+    return Column(children: tasks.map((task) => _buildTaskItem(task)).toList());
   }
 
   Widget _buildTaskItem(dynamic task) {
     final String? heading = task['heading']?.toString();
-    final bool hasHeading = heading != null && heading.isNotEmpty && heading != 'null';
+    final bool hasHeading =
+        heading != null && heading.isNotEmpty && heading != 'null';
 
     return GestureDetector(
       onTap: () {
-        final offerId = task['id'] is int ? task['id'] : int.tryParse(task['id']?.toString() ?? '0');
+        final offerId = task['id'] is int
+            ? task['id']
+            : int.tryParse(task['id']?.toString() ?? '0');
         if (offerId != null && offerId != 0) {
           Navigator.push(
             context,
@@ -520,9 +536,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: (task['image_url'] != null && task['image_url'].toString().isNotEmpty)
-                        ? Image.network(task['image_url'], fit: BoxFit.cover, 
-                            errorBuilder: (c, e, s) => const Icon(Icons.image_outlined))
+                    child:
+                        (task['image_url'] != null &&
+                            task['image_url'].toString().isNotEmpty)
+                        ? Image.network(
+                            task['image_url'],
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, e, s) =>
+                                const Icon(Icons.image_outlined),
+                          )
                         : const Icon(Icons.image_outlined),
                   ),
                 ),
@@ -550,7 +572,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: AppColors.background,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 20),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
@@ -560,7 +586,10 @@ class _HomeScreenState extends State<HomeScreen> {
               top: -6,
               left: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.secondary,
                   borderRadius: BorderRadius.circular(10),
@@ -598,11 +627,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/coin.png',
-            height: 16,
-            errorBuilder: (c, e, s) => const Icon(Icons.monetization_on, color: Colors.white, size: 16),
-          ),
+          const WalletSymbolIcon(size: 16, fallbackColor: Colors.white),
           const SizedBox(width: 6),
           Text(
             amount,

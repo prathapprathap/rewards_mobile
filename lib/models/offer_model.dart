@@ -5,6 +5,7 @@ class Offer {
   final int id;
   final String offerId; // external provider ID
   final String offerName;
+  final String? sideLabel;
   final String heading;
   final String? historyName;
   final String baseLink; // offer_url (destination)
@@ -21,6 +22,7 @@ class Offer {
     required this.id,
     required this.offerId,
     required this.offerName,
+    this.sideLabel,
     required this.heading,
     this.historyName,
     required this.baseLink,
@@ -67,6 +69,7 @@ class Offer {
       id: (json['id'] as num).toInt(),
       offerId: json['offer_id']?.toString() ?? '',
       offerName: json['offer_name']?.toString() ?? '',
+      sideLabel: json['side_label']?.toString(),
       heading: json['heading']?.toString() ?? '',
       historyName: json['history_name']?.toString(),
       baseLink: json['offer_url']?.toString() ?? '',
@@ -77,26 +80,29 @@ class Offer {
       description: json['description']?.toString(),
       imageUrl: json['image_url']?.toString(),
       status: json['status']?.toString() ?? 'active',
-      events: rawEvents.map((e) => OfferEvent.fromJson(e as Map<String, dynamic>)).toList(),
+      events: rawEvents
+          .map((e) => OfferEvent.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'offer_id': offerId,
-        'offer_name': offerName,
-        'heading': heading,
-        'history_name': historyName,
-        'offer_url': baseLink,
-        'tracking_link': trackingLink,
-        'amount': amount,
-        'currency_type': currencyType,
-        'event_name': eventName,
-        'description': description,
-        'image_url': imageUrl,
-        'status': status,
-        'events': events.map((e) => e.toJson()).toList(),
-      };
+    'id': id,
+    'offer_id': offerId,
+    'offer_name': offerName,
+    'side_label': sideLabel,
+    'heading': heading,
+    'history_name': historyName,
+    'offer_url': baseLink,
+    'tracking_link': trackingLink,
+    'amount': amount,
+    'currency_type': currencyType,
+    'event_name': eventName,
+    'description': description,
+    'image_url': imageUrl,
+    'status': status,
+    'events': events.map((e) => e.toJson()).toList(),
+  };
 
   bool get isActive => status.toLowerCase() == 'active';
 
@@ -113,7 +119,7 @@ class Offer {
 }
 
 /// Represents a single completion milestone for an offer.
-/// Multiple [OfferEvent]s allow step-by-step reward progression (e.g. Install → 
+/// Multiple [OfferEvent]s allow step-by-step reward progression (e.g. Install →
 /// Level 5 → Purchase), each awarding different [points] when the provider fires
 /// a postback with the matching [eventId].
 class OfferEvent {
@@ -147,13 +153,13 @@ class OfferEvent {
   }
 
   Map<String, dynamic> toJson() => {
-        'event_id': eventId,
-        'event_name': eventName,
-        'points': points,
-        'currency_type': currencyType,
-        'is_completed': isCompleted,
-        'completed_at': completedAt?.toIso8601String(),
-      };
+    'event_id': eventId,
+    'event_name': eventName,
+    'points': points,
+    'currency_type': currencyType,
+    'is_completed': isCompleted,
+    'completed_at': completedAt?.toIso8601String(),
+  };
 
   String get currencySymbol {
     switch (currencyType) {

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'offer_detail_screen.dart';
 import '../constants/colors.dart';
 import '../models/offer_model.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/app_dialog.dart';
 
 class OfferwallScreen extends StatefulWidget {
   const OfferwallScreen({super.key});
@@ -67,18 +66,18 @@ class _OfferwallScreenState extends State<OfferwallScreen>
     }
   }
 
-  /// Opens the Offer bottom-sheet with all its events when user taps an offer card.
-  void _showOfferSheet(Offer offer) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _OfferBottomSheet(offer: offer),
-    ).then((_) {
-      // Refresh in case user completed something
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+  /// Navigates to the OfferDetailScreen when user taps an offer card.
+  Future<void> _showOfferDetail(Offer offer) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OfferDetailScreen(offerId: offer.id),
+      ),
+    );
+    if (mounted) {
       userProvider.refreshUser();
-    });
+    }
   }
 
   @override
@@ -93,17 +92,35 @@ class _OfferwallScreenState extends State<OfferwallScreen>
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
+            automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.headerGradient,
-                ),
-                padding:
-                    const EdgeInsets.fromLTRB(20, 56, 20, 20),
+                decoration: BoxDecoration(gradient: AppColors.headerGradient),
+                padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     const Text(
                       '🎯 Offerwall',
                       style: TextStyle(
@@ -116,7 +133,7 @@ class _OfferwallScreenState extends State<OfferwallScreen>
                     Text(
                       'Complete offers & earn rewards',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 14,
                       ),
                     ),
@@ -129,35 +146,33 @@ class _OfferwallScreenState extends State<OfferwallScreen>
         body: _isLoading
             ? _buildLoader()
             : _errorMessage != null
-                ? _buildError()
-                : _offers.isEmpty
-                    ? _buildEmpty()
-                    : FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: RefreshIndicator(
-                          onRefresh: _loadOffers,
-                          color: AppColors.accent,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                            itemCount: _offers.length,
-                            itemBuilder: (context, index) {
-                              return _OfferCard(
-                                offer: _offers[index],
-                                index: index,
-                                onTap: () => _showOfferSheet(_offers[index]),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+            ? _buildError()
+            : _offers.isEmpty
+            ? _buildEmpty()
+            : FadeTransition(
+                opacity: _fadeAnimation,
+                child: RefreshIndicator(
+                  onRefresh: _loadOffers,
+                  color: AppColors.accent,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                    itemCount: _offers.length,
+                    itemBuilder: (context, index) {
+                      return _OfferCard(
+                        offer: _offers[index],
+                        index: index,
+                        onTap: () => _showOfferDetail(_offers[index]),
+                      );
+                    },
+                  ),
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildLoader() {
-    return Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
-    );
+    return Center(child: CircularProgressIndicator(color: AppColors.primary));
   }
 
   Widget _buildError() {
@@ -167,8 +182,11 @@ class _OfferwallScreenState extends State<OfferwallScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
-                size: 72, color: AppColors.textTertiary),
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 72,
+              color: AppColors.textTertiary,
+            ),
             const SizedBox(height: 20),
             Text(
               _errorMessage!,
@@ -187,9 +205,12 @@ class _OfferwallScreenState extends State<OfferwallScreen>
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 14),
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -207,18 +228,12 @@ class _OfferwallScreenState extends State<OfferwallScreen>
           SizedBox(height: 16),
           Text(
             'No offers available right now',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
           ),
           SizedBox(height: 8),
           Text(
             'Check back soon for new opportunities!',
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
           ),
         ],
       ),
@@ -243,163 +258,211 @@ class _OfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completedEvents =
-        offer.events.where((e) => e.isCompleted).length;
+    final completedEvents = offer.events.where((e) => e.isCompleted).length;
     final totalEvents = offer.events.length;
     final progress = totalEvents > 0 ? completedEvents / totalEvents : 0.0;
+    final sideLabel = offer.sideLabel?.trim() ?? '';
+    final hasSideLabel = sideLabel.isNotEmpty;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowLight,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadowLight,
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Offer icon / image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: offer.imageUrl != null
-                        ? Image.network(
-                            offer.imageUrl!,
-                            width: 64,
-                            height: 64,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _placeholderIcon(index),
-                          )
-                        : _placeholderIcon(index),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header row
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    hasSideLabel ? 28 : 16,
+                    16,
+                    16,
                   ),
-                  const SizedBox(width: 14),
-                  // Offer info
-                  Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Offer icon / image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: offer.imageUrl != null
+                            ? Image.network(
+                                offer.imageUrl!,
+                                width: 64,
+                                height: 64,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    _placeholderIcon(index),
+                              )
+                            : _placeholderIcon(index),
+                      ),
+                      const SizedBox(width: 14),
+                      // Offer info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              offer.offerName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: AppColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              offer.heading,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                            // Reward badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.accentGradient,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'Earn ${offer.currencySymbol}${offer.amount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textTertiary,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Events progress strip (only if multi-event offer)
+                if (totalEvents > 0) ...[
+                  const Divider(height: 1, color: AppColors.border),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          offer.offerName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: AppColors.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          offer.heading,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        // Reward badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            gradient: AppColors.accentGradient,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Earn ${offer.currencySymbol}${offer.amount.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '$completedEvents / $totalEvents milestones',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
+                            Text(
+                              '${(progress * 100).toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: progress == 1.0
+                                    ? AppColors.success
+                                    : AppColors.accent,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: AppColors.border,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              progress == 1.0
+                                  ? AppColors.success
+                                  : AppColors.accent,
+                            ),
+                            minHeight: 6,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Event chips
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: offer.events
+                              .map((e) => _EventChip(event: e))
+                              .toList(),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right,
-                      color: AppColors.textTertiary),
                 ],
-              ),
+              ],
             ),
-
-            // Events progress strip (only if multi-event offer)
-            if (totalEvents > 0) ...[
-              const Divider(height: 1, color: AppColors.border),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$completedEvents / $totalEvents milestones',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        Text(
-                          '${(progress * 100).toStringAsFixed(0)}%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: progress == 1.0
-                                ? AppColors.success
-                                : AppColors.accent,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: AppColors.border,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          progress == 1.0
-                              ? AppColors.success
-                              : AppColors.accent,
-                        ),
-                        minHeight: 6,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Event chips
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: offer.events
-                          .map((e) => _EventChip(event: e))
-                          .toList(),
+          ),
+          if (hasSideLabel)
+            Positioned(
+              top: -4,
+              left: 18,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.24),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
+                child: Text(
+                  sideLabel.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                  ),
+                ),
               ),
-            ],
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -415,7 +478,7 @@ class _OfferCard extends StatelessWidget {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: colors[index % colors.length].withOpacity(0.15),
+        color: colors[index % colors.length].withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
@@ -442,13 +505,13 @@ class _EventChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: event.isCompleted
-            ? AppColors.success.withOpacity(0.1)
+            ? AppColors.success.withValues(alpha: 0.1)
             : AppColors.accentLight,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: event.isCompleted
-              ? AppColors.success.withOpacity(0.4)
-              : AppColors.accent.withOpacity(0.3),
+              ? AppColors.success.withValues(alpha: 0.4)
+              : AppColors.accent.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -459,8 +522,7 @@ class _EventChip extends StatelessWidget {
                 ? Icons.check_circle_rounded
                 : Icons.radio_button_unchecked_rounded,
             size: 12,
-            color:
-                event.isCompleted ? AppColors.success : AppColors.accent,
+            color: event.isCompleted ? AppColors.success : AppColors.accent,
           ),
           const SizedBox(width: 4),
           Text(
@@ -468,8 +530,7 @@ class _EventChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color:
-                  event.isCompleted ? AppColors.success : AppColors.accent,
+              color: event.isCompleted ? AppColors.success : AppColors.accent,
             ),
           ),
           const SizedBox(width: 4),
@@ -486,518 +547,5 @@ class _EventChip extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Offer Detail Bottom-Sheet (with full event timeline)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _OfferBottomSheet extends StatefulWidget {
-  final Offer offer;
-
-  const _OfferBottomSheet({required this.offer});
-
-  @override
-  State<_OfferBottomSheet> createState() => _OfferBottomSheetState();
-}
-
-class _OfferBottomSheetState extends State<_OfferBottomSheet> {
-  bool _isLaunching = false;
-
-  Future<void> _launchOffer() async {
-    final userProvider =
-        Provider.of<UserProvider>(context, listen: false);
-    final userId = userProvider.user?.id;
-    if (userId == null) return;
-
-    setState(() => _isLaunching = true);
-    try {
-      final api = ApiService();
-      // Ensure device ID is fetched (use a timeout just in case the plugin hangs)
-      final deviceId = await ApiService.getDeviceId().timeout(const Duration(seconds: 5), onTimeout: () => '');
-
-      debugPrint('🚀 Starting tracking for Offer ID: ${widget.offer.id} for UI: $userId');
-
-      final trackingData = await api.trackOfferClick(
-        userId: userId,
-        offerId: widget.offer.id,
-        deviceId: deviceId,
-      ).timeout(const Duration(seconds: 15), onTimeout: () => throw Exception('Connection timeout. Please check your internet.'));
-
-      final trackingUrl = trackingData['trackingUrl'] as String?;
-      debugPrint('🔗 Received Tracking URL: $trackingUrl');
-
-      if (trackingUrl != null && trackingUrl.isNotEmpty) {
-        final uri = Uri.parse(trackingUrl);
-        
-        // Use launchUrl directly as canLaunchUrl can be unreliable on some Android versions.
-        // It will throw an exception if it fails, which we catch.
-        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-
-        if (launched) {
-          if (mounted) {
-            AppDialog.show(
-              context,
-              title: 'Offer Started!',
-              message: 'Redirecting to complete tasks. Follow instructions to earn rewards.',
-              type: DialogType.success,
-              onConfirm: () => Navigator.pop(context),
-            );
-          }
-        } else {
-          throw Exception('Could not launch the browser. Please check your settings.');
-        }
-      } else {
-        throw Exception('Tracking URL not available for this offer.');
-      }
-    } catch (e) {
-      debugPrint('❌ Offer Launch Error: $e');
-      if (mounted) {
-        AppDialog.show(
-          context,
-          title: 'Error',
-          message: 'Failed to start offer: ${e.toString().replaceAll('Exception: ', '')}',
-          type: DialogType.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLaunching = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final offer = widget.offer;
-    final hasEvents = offer.events.isNotEmpty;
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      builder: (_, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            // Drag handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        if (offer.imageUrl != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.network(
-                              offer.imageUrl!,
-                              width: 72,
-                              height: 72,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _FallbackIcon(size: 72),
-                            ),
-                          )
-                        else
-                          _FallbackIcon(size: 72),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                offer.offerName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                offer.heading,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.accentGradient,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  'Total: ${offer.currencySymbol}${offer.amount.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Description
-                    if (offer.description?.isNotEmpty == true) ...[
-                      const SizedBox(height: 24),
-                      const Text(
-                        'About This Offer',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        offer.description!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                          height: 1.6,
-                        ),
-                      ),
-                    ],
-
-                    // Milestones / Events timeline
-                    if (hasEvents) ...[
-                      const SizedBox(height: 28),
-                      const Text(
-                        'Reward Milestones',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Complete each step to earn progressive rewards.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ...offer.events.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final event = entry.value;
-                        final isLast =
-                            idx == offer.events.length - 1;
-                        return _EventTimelineTile(
-                          event: event,
-                          isLast: isLast,
-                          stepNumber: idx + 1,
-                        );
-                      }).toList(),
-                    ],
-
-                    const SizedBox(height: 32),
-
-                    // How it works info
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentLight,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: AppColors.accent.withOpacity(0.2)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.info_outline,
-                                  color: AppColors.accent, size: 18),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'How does this work?',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          _infoRow('1.',
-                              'Tap "Start Offer" — we record your unique click.'),
-                          _infoRow('2.',
-                              'Complete the required tasks inside the app.'),
-                          _infoRow('3.',
-                              'The provider verifies completion & notifies us.'),
-                          _infoRow('4.',
-                              'Your wallet is credited automatically!'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // CTA Button
-            Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(24, 0, 24, 28),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isLaunching ? null : _launchOffer,
-                  icon: _isLaunching
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.play_arrow_rounded, size: 26),
-                  label: Text(
-                    _isLaunching ? 'Opening...' : 'Start Offer',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 6,
-                    shadowColor:
-                        AppColors.success.withOpacity(0.4),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(String num, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            num,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.accent,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FallbackIcon extends StatelessWidget {
-  final double size;
-
-  const _FallbackIcon({required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.accentLight,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(Icons.card_giftcard_rounded,
-          color: AppColors.accent, size: 32),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Event Timeline Tile
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _EventTimelineTile extends StatelessWidget {
-  final OfferEvent event;
-  final int stepNumber;
-  final bool isLast;
-
-  const _EventTimelineTile({
-    required this.event,
-    required this.stepNumber,
-    required this.isLast,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = event.isCompleted ? AppColors.success : AppColors.accent;
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Timeline line + dot
-          Column(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color:
-                      event.isCompleted ? AppColors.success : AppColors.accentLight,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: event.isCompleted
-                        ? AppColors.success
-                        : AppColors.accent,
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: event.isCompleted
-                      ? const Icon(Icons.check_rounded,
-                          color: Colors.white, size: 18)
-                      : Text(
-                          '$stepNumber',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: AppColors.border,
-                    margin:
-                        const EdgeInsets.symmetric(vertical: 4),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          // Event info
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: event.isCompleted
-                      ? AppColors.success.withOpacity(0.05)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: event.isCompleted
-                        ? AppColors.success.withOpacity(0.3)
-                        : AppColors.border,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            event.eventName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: event.isCompleted
-                                  ? AppColors.success
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                          if (event.isCompleted &&
-                              event.completedAt != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'Completed ${_formatDate(event.completedAt!)}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.success.withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: event.isCompleted
-                            ? AppColors.success.withOpacity(0.1)
-                            : AppColors.accentLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${event.currencySymbol}${event.points.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: event.isCompleted
-                              ? AppColors.success
-                              : AppColors.accent,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

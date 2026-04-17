@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/app_dialog.dart';
 
@@ -15,8 +16,9 @@ class DailyCheckInScreen extends StatefulWidget {
 
 class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
   bool _isLoading = false;
-  int _currentDay = 2; // Dummy current day
-  List<bool> _checkInHistory = List.generate(30, (index) => index < 1); // Only Day 1 done
+  int _currentDay = 1;
+  bool _alreadyCheckedInToday = false;
+  List<bool> _checkInHistory = List.generate(30, (index) => false);
 
   @override
   void initState() {
@@ -32,13 +34,19 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
     try {
       final api = ApiService();
       final data = await api.getCheckInHistory(userId);
-      
+
       if (mounted) {
         setState(() {
           final int streak = int.tryParse(data['streak'].toString()) ?? 0;
-          _currentDay = streak + 1;
-          
-          // Only show up to 30 days. If streak is reset, start from 1.
+          final List<dynamic> history =
+              (data['history'] as List<dynamic>?) ?? [];
+          final bool alreadyCheckedToday = history.any(_isTodayEntry);
+
+          _alreadyCheckedInToday = alreadyCheckedToday;
+          _currentDay = alreadyCheckedToday
+              ? (streak == 0 ? 1 : streak)
+              : (streak >= 30 ? 30 : streak + 1);
+
           _checkInHistory = List.generate(30, (index) => index < streak);
         });
       }
@@ -57,17 +65,17 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
     try {
       final api = ApiService();
       final result = await api.dailyCheckIn(userId);
-      
+
       if (mounted) {
         final reward = result['reward'] ?? 0;
         final milestone = result['milestoneReached'] ?? false;
-        
+
         AppDialog.show(
           context,
           title: milestone ? 'Jackpot!' : 'Success',
-          message: milestone 
-            ? 'Amazing! You completed 30 consecutive days and earned ₹$reward!' 
-            : 'You\'ve checked in for Day ${result['streak']}. Keep it up for the 30-day reward!',
+          message: milestone
+              ? 'Amazing! You completed 30 consecutive days and earned ₹$reward!'
+              : 'You\'ve checked in for Day ${result['streak']}. Keep it up for the 30-day reward!',
           type: DialogType.success,
           onConfirm: () {
             userProvider.refreshUser();
@@ -94,7 +102,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
     // Listen to SettingsProvider for dynamic color updates
     Provider.of<SettingsProvider>(context);
     final user = Provider.of<UserProvider>(context).user;
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -129,9 +137,11 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: Text(
-                          _currentDay >= 30 
-                            ? 'CONGRATULATIONS! You have completed your 30-day streak. Claim your grand reward now!'
-                            : 'Check in for 30 consecutive days to unlock the grand reward. If you miss a day, your progress resets.',
+                          _currentDay >= 30 && !_alreadyCheckedInToday
+                              ? 'CONGRATULATIONS! You have completed your 30-day streak. Claim your grand reward now!'
+                              : _alreadyCheckedInToday
+                              ? 'Today\'s check-in is already completed. Come back tomorrow to continue your streak.'
+                              : 'Check in for 30 consecutive days to unlock the grand reward. If you miss a day, your progress resets.',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             fontSize: 14,
@@ -166,7 +176,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back, color: Colors.black87),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.5),
+              backgroundColor: Colors.white.withValues(alpha: 0.5),
               padding: const EdgeInsets.all(12),
             ),
           ),
@@ -197,7 +207,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -212,11 +222,15 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
               color: Color(0xFFF1C40F),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.currency_rupee, color: Colors.white, size: 14),
+            child: const Icon(
+              Icons.currency_rupee,
+              color: Colors.white,
+              size: 14,
+            ),
           ),
           const SizedBox(width: 8),
           Text(
-             (user?.walletBalance ?? 0.0).toStringAsFixed(2),
+            (user?.walletBalance ?? 0.0).toStringAsFixed(2),
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w800,
               fontSize: 14,
@@ -238,8 +252,11 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
           height: 220,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.2),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+            color: Colors.white.withValues(alpha: 0.2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.5),
+              width: 1,
+            ),
           ),
         ),
         Container(
@@ -247,10 +264,10 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
           height: 180,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 20,
                 spreadRadius: 5,
               ),
@@ -288,7 +305,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
 
   Widget _buildClaimButton() {
     final bool isMilestoneDay = (_currentDay == 30);
-    
+
     return Container(
       width: 260,
       height: 60,
@@ -296,34 +313,58 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: (isMilestoneDay ? Colors.orange : AppColors.primary).withOpacity(0.4),
+            color: (isMilestoneDay ? Colors.orange : AppColors.primary)
+                .withValues(alpha: 0.4),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleCheckIn,
+        onPressed: (_isLoading || _alreadyCheckedInToday)
+            ? null
+            : _handleCheckIn,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isMilestoneDay ? Colors.orange : AppColors.primary,
+          backgroundColor: _alreadyCheckedInToday
+              ? Colors.grey.shade400
+              : isMilestoneDay
+              ? Colors.orange
+              : AppColors.primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
           elevation: 0,
         ),
-        child: _isLoading 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : Text(
-              isMilestoneDay ? 'CLAIM 30-DAY REWARD' : 'CHECK-IN DAY ${_currentDay > 30 ? 30 : _currentDay}',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1,
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text(
+                _alreadyCheckedInToday
+                    ? 'ALREADY CHECKED IN'
+                    : isMilestoneDay
+                    ? 'CLAIM 30-DAY REWARD'
+                    : 'CHECK-IN DAY ${_currentDay > 30 ? 30 : _currentDay}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
               ),
-            ),
       ),
     );
+  }
+
+  bool _isTodayEntry(dynamic value) {
+    final raw = value?.toString();
+    if (raw == null || raw.isEmpty) return false;
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return false;
+
+    final now = DateTime.now();
+    return parsed.year == now.year &&
+        parsed.month == now.month &&
+        parsed.day == now.day;
   }
 
   Widget _buildStatisticsSection() {
@@ -331,9 +372,12 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.5),
+          width: 2,
+        ),
       ),
       child: Column(
         children: [
@@ -366,16 +410,20 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: isDone 
-                        ? const LinearGradient(
-                            colors: [Color(0xFFBDBDBD), Color(0xFF9E9E9E)],
-                          )
-                        : LinearGradient(
-                            colors: [AppColors.primaryFixedDim, AppColors.primary],
-                          ),
+                      gradient: isDone
+                          ? const LinearGradient(
+                              colors: [Color(0xFFBDBDBD), Color(0xFF9E9E9E)],
+                            )
+                          : LinearGradient(
+                              colors: [
+                                AppColors.primaryFixedDim,
+                                AppColors.primary,
+                              ],
+                            ),
                       boxShadow: [
                         BoxShadow(
-                          color: (isDone ? Colors.grey : AppColors.primary).withOpacity(0.2),
+                          color: (isDone ? Colors.grey : AppColors.primary)
+                              .withValues(alpha: 0.2),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

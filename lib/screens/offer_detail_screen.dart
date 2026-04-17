@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'web_view_screen.dart';
 import '../widgets/app_dialog.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 
 class OfferDetailScreen extends StatefulWidget {
@@ -71,28 +71,29 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
 
       final trackingUrl =
           (trackingData['trackingUrl'] as String?)?.isNotEmpty == true
-              ? trackingData['trackingUrl'] as String
-              : _offerDetails?['offer_url'] as String?;
+          ? trackingData['trackingUrl'] as String
+          : _offerDetails?['offer_url'] as String?;
 
       if (trackingUrl != null && trackingUrl.isNotEmpty) {
-        if (context.mounted) {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WebViewScreen(
-                url: trackingUrl,
-                offerName: _offerDetails?['offer_name'] ?? 'Offer',
-              ),
-            ),
-          );
+        if (!mounted) return;
+        final navigator = Navigator.of(context);
+        final offerName = _offerDetails?['offer_name'] ?? 'Offer';
+        final result = await navigator.push(
+          MaterialPageRoute(
+            builder: (context) =>
+                WebViewScreen(url: trackingUrl, offerName: offerName),
+          ),
+        );
 
-          if (result == true && context.mounted) {
-            _showSnack(
-                'Offer tracked! Complete the task to earn ₹${_offerDetails!['amount']}',
-                AppColors.success);
-            Future.delayed(
-                const Duration(seconds: 2), () => mounted ? Navigator.pop(context) : null);
-          }
+        if (result == true && mounted) {
+          _showSnack(
+            'Offer tracked! Complete the task to earn ₹${_offerDetails!['amount']}',
+            AppColors.success,
+          );
+          Future.delayed(
+            const Duration(seconds: 2),
+            () => mounted ? navigator.pop() : null,
+          );
         }
       } else {
         _showSnack('This offer has no URL configured yet.', Colors.orange);
@@ -126,8 +127,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _errorMessage != null
-              ? _buildErrorView()
-              : _buildBody(),
+          ? _buildErrorView()
+          : _buildBody(),
     );
   }
 
@@ -138,13 +139,14 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline,
-              size: 72, color: AppColors.outlineVariant),
+          Icon(Icons.error_outline, size: 72, color: AppColors.outlineVariant),
           const SizedBox(height: 20),
           Text(
             _errorMessage!,
             style: GoogleFonts.plusJakartaSans(
-                fontSize: 16, color: AppColors.onSurfaceVariant),
+              fontSize: 16,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -155,7 +157,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
 
   Widget _buildBody() {
     final offer = _offerDetails!;
-    final steps = (offer['steps'] as List<dynamic>?) ?? [];
+    final steps = _resolveSteps(offer);
     final bool isCompleted =
         offer['is_completed'] == true || offer['is_completed'] == 1;
 
@@ -181,7 +183,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                     const SizedBox(height: 36),
 
                     // ── Steps to Earn ──────────────────────────────────
-                    _buildStepsSection(steps, offer),
+                    _buildStepsSection(steps),
 
                     const SizedBox(height: 36),
 
@@ -201,12 +203,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         ),
 
         // ── Fixed CTA Button ─────────────────────────────────────────
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: _buildCTA(),
-        ),
+        Positioned(bottom: 0, left: 0, right: 0, child: _buildCTA()),
       ],
     );
   }
@@ -221,9 +218,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         right: 16,
         bottom: 12,
       ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.88),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.88)),
       child: Row(
         children: [
           GestureDetector(
@@ -298,9 +293,13 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 5),
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppColors.tertiaryFixed.withValues(alpha: 0.5),
+                              color: AppColors.tertiaryFixed.withValues(
+                                alpha: 0.5,
+                              ),
                               borderRadius: BorderRadius.circular(99),
                             ),
                             child: Text(
@@ -337,15 +336,21 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         color: AppColors.primaryFixed.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: (offer['image_url'] != null &&
+                      child:
+                          (offer['image_url'] != null &&
                               (offer['image_url'] as String).isNotEmpty)
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(18),
-                              child: Image.network(offer['image_url'],
-                                  fit: BoxFit.cover),
+                              child: Image.network(
+                                offer['image_url'],
+                                fit: BoxFit.cover,
+                              ),
                             )
-                          : Icon(Icons.account_balance,
-                              color: AppColors.primary, size: 30),
+                          : Icon(
+                              Icons.account_balance,
+                              color: AppColors.primary,
+                              size: 30,
+                            ),
                     ),
                   ],
                 ),
@@ -445,9 +450,10 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                 Text(
                   value,
                   style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -459,13 +465,13 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
 
   // ─── Steps Section ────────────────────────────────────────────────────────
 
-  Widget _buildStepsSection(List<dynamic> steps, Map<String, dynamic> offer) {
-    final defaultSteps = steps.isNotEmpty
+  Widget _buildStepsSection(List<dynamic> steps) {
+    final resolvedSteps = steps.isNotEmpty
         ? steps
         : [
-            "Click 'Start Offer' to visit the partner's portal.",
-            offer['description'] ?? 'Complete the required steps.',
-            'Receive your cash reward, instantly credited to your wallet.',
+            "Click 'Start Offer' to open the partner page.",
+            'Complete the required action for this offer.',
+            'Receive your cash reward after successful verification.',
           ];
 
     return Column(
@@ -486,8 +492,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        ...defaultSteps.asMap().entries.map((entry) {
-          final isLast = entry.key == defaultSteps.length - 1;
+        ...resolvedSteps.asMap().entries.map((entry) {
+          final isLast = entry.key == resolvedSteps.length - 1;
           return _buildStep(
             number: entry.key + 1,
             text: entry.value.toString(),
@@ -497,6 +503,55 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         }),
       ],
     );
+  }
+
+  List<String> _resolveSteps(Map<String, dynamic> offer) {
+    final rawSteps = offer['steps'] as List<dynamic>?;
+    final normalizedSteps =
+        rawSteps
+            ?.map((step) => _normalizeStepText(step))
+            .where((step) => step.isNotEmpty)
+            .toList() ??
+        const <String>[];
+    if (normalizedSteps.isNotEmpty) {
+      return normalizedSteps;
+    }
+
+    final rawEvents = offer['events'] as List<dynamic>?;
+    final eventSteps =
+        rawEvents
+            ?.map((event) {
+              if (event is Map<String, dynamic>) {
+                return _normalizeStepText(event['event_name']);
+              }
+              if (event is Map) {
+                return _normalizeStepText(event['event_name']);
+              }
+              return '';
+            })
+            .where((step) => step.isNotEmpty)
+            .toList() ??
+        const <String>[];
+
+    if (eventSteps.isNotEmpty) {
+      return [
+        "Click 'Start Offer' to open the partner page.",
+        ...eventSteps,
+        'Receive your cash reward after successful verification.',
+      ];
+    }
+
+    return const [
+      "Click 'Start Offer' to open the partner page.",
+      'Complete the required action for this offer.',
+      'Receive your cash reward after successful verification.',
+    ];
+  }
+
+  String _normalizeStepText(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isEmpty) return '';
+    return text.replaceAll(RegExp(r'\s+'), ' ');
   }
 
   Widget _buildStep({
@@ -522,7 +577,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                           color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
-                        )
+                        ),
                       ]
                     : null,
               ),
@@ -538,11 +593,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               ),
             ),
             if (!isLast)
-              Container(
-                width: 1.5,
-                height: 44,
-                color: AppColors.primaryFixed,
-              ),
+              Container(width: 1.5, height: 44, color: AppColors.primaryFixed),
           ],
         ),
         const SizedBox(width: 20),
@@ -591,7 +642,10 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
             offer['terms'] as String? ??
                 'Must be a new customer. Account must remain active for 30 days.',
             style: GoogleFonts.inter(
-                fontSize: 12, color: AppColors.onSurface, height: 1.5),
+              fontSize: 12,
+              color: AppColors.onSurface,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -605,7 +659,9 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         color: AppColors.secondaryFixed.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: AppColors.secondary.withValues(alpha: 0.1), width: 1),
+          color: AppColors.secondary.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,7 +681,10 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
           Text(
             'Reward typically processes within 24 hours of successful verification.',
             style: GoogleFonts.inter(
-                fontSize: 12, color: AppColors.onSurface, height: 1.5),
+              fontSize: 12,
+              color: AppColors.onSurface,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -680,7 +739,9 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     else ...[
                       Text(
@@ -692,7 +753,11 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                      const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ],
                   ],
                 ),
