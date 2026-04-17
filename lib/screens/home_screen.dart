@@ -489,10 +489,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTaskItem(dynamic task) {
-    final String? heading = task['heading']?.toString();
-    final bool hasHeading =
-        heading != null && heading.isNotEmpty && heading != 'null';
-
     return GestureDetector(
       onTap: () {
         final offerId = task['id'] is int
@@ -581,37 +577,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (hasHeading)
-            Positioned(
-              top: -6,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.secondary.withOpacity(0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  heading!.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

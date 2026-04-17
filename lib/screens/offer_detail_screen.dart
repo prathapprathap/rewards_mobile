@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'web_view_screen.dart';
 import '../widgets/app_dialog.dart';
 import '../constants/colors.dart';
@@ -52,6 +53,57 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     }
   }
 
+  /// Check if URL is a Play Store link
+  bool _isPlayStoreUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    
+    return uri.host.contains('play.google.com') ||
+           uri.host.contains('market.android.com') ||
+           url.startsWith('market://');
+  }
+
+  /// Open Play Store app directly
+  Future<void> _openPlayStore(String url) async {
+    try {
+      // Convert web URL to Play Store app URL if needed
+      String playStoreUrl = url;
+      
+      if (url.contains('play.google.com')) {
+        // Extract package name from URL
+        final uri = Uri.parse(url);
+        final packageName = uri.queryParameters['id'];
+        if (packageName != null) {
+          playStoreUrl = 'market://details?id=$packageName';
+        }
+      }
+      
+      final uri = Uri.parse(playStoreUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Force external app (Play Store)
+        );
+        
+        if (mounted) {
+          _showSnack(
+            'Opening Play Store... Complete the task to earn ₹${_offerDetails!['amount']}',
+            AppColors.success,
+          );
+          // Delay before popping back
+          Future.delayed(
+            const Duration(seconds: 2),
+            () => mounted ? Navigator.pop(context) : null,
+          );
+        }
+      } else {
+        _showSnack('Could not open Play Store', AppColors.error);
+      }
+    } catch (e) {
+      _showSnack('Failed to open Play Store: $e', AppColors.error);
+    }
+  }
+
   Future<void> _startOffer() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userId = userProvider.user?.id;
@@ -76,24 +128,32 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
 
       if (trackingUrl != null && trackingUrl.isNotEmpty) {
         if (!mounted) return;
-        final navigator = Navigator.of(context);
-        final offerName = _offerDetails?['offer_name'] ?? 'Offer';
-        final result = await navigator.push(
-          MaterialPageRoute(
-            builder: (context) =>
-                WebViewScreen(url: trackingUrl, offerName: offerName),
-          ),
-        );
+        
+        // Check if it's a Play Store URL
+        if (_isPlayStoreUrl(trackingUrl)) {
+          // Open Play Store app directly
+          await _openPlayStore(trackingUrl);
+        } else {
+          // Open in WebView for other URLs
+          final navigator = Navigator.of(context);
+          final offerName = _offerDetails?['offer_name'] ?? 'Offer';
+          final result = await navigator.push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  WebViewScreen(url: trackingUrl, offerName: offerName),
+            ),
+          );
 
-        if (result == true && mounted) {
-          _showSnack(
-            'Offer tracked! Complete the task to earn ₹${_offerDetails!['amount']}',
-            AppColors.success,
-          );
-          Future.delayed(
-            const Duration(seconds: 2),
-            () => mounted ? navigator.pop() : null,
-          );
+          if (result == true && mounted) {
+            _showSnack(
+              'Offer tracked! Complete the task to earn ₹${_offerDetails!['amount']}',
+              AppColors.success,
+            );
+            Future.delayed(
+              const Duration(seconds: 2),
+              () => mounted ? navigator.pop() : null,
+            );
+          }
         }
       } else {
         _showSnack('This offer has no URL configured yet.', Colors.orange);
