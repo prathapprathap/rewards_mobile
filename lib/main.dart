@@ -7,7 +7,18 @@ import 'providers/settings_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_layout.dart';
 
-void main() {
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load cached colors before app starts to avoid "Green flash"
+  final prefs = await SharedPreferences.getInstance();
+  final cachedColor = prefs.getString('cached_primary_color');
+  if (cachedColor != null) {
+    AppColors.updateColors(cachedColor);
+  }
+  
   runApp(const MyApp());
 }
 
@@ -16,7 +27,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pewards typographic pairing:
+    // Rewards typographic pairing:
     //  • Plus Jakarta Sans — display / headlines / brand moments
     //  • Inter             — body / labels / data
     final baseTextTheme = GoogleFonts.interTextTheme();
@@ -100,8 +111,9 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
 
-    if (userProvider.isLoading) {
+    if (userProvider.isLoading || settingsProvider.isLoading) {
       return Scaffold(
         backgroundColor: AppColors.background,
         body: Center(

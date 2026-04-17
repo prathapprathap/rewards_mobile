@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../constants/colors.dart';
 
@@ -16,13 +17,18 @@ class SettingsProvider with ChangeNotifier {
       
       // Update dynamic colors if present
       if (_settings.containsKey('primary_color')) {
-        AppColors.updateColors(_settings['primary_color'].toString());
+        final colorHex = _settings['primary_color'].toString();
+        AppColors.updateColors(colorHex);
+        
+        // Cache for next launch
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('cached_primary_color', colorHex);
       }
       
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      print('Error loading settings: $e');
+      debugPrint('Error loading settings: $e');
       _isLoading = false;
       notifyListeners();
     }

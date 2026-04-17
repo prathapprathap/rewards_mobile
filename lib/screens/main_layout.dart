@@ -19,11 +19,11 @@ class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
-    const ReferScreen(),
-    const ExtraScreen(),
-    const WalletScreen(),
-    const ProfileScreen(),
+    HomeScreen(),
+    ReferScreen(),
+    ExtraScreen(),
+    WalletScreen(),
+    ProfileScreen(),
   ];
 
   @override

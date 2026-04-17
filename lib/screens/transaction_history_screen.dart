@@ -112,11 +112,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       ),
       body: _isLoading
           ? Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
           : RefreshIndicator(
               onRefresh: _fetchData,
-              color: AppColors.accent,
+              color: AppColors.primary,
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [

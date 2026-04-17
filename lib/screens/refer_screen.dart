@@ -49,9 +49,11 @@ class _ReferScreenState extends State<ReferScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to SettingsProvider for dynamic color updates
+    Provider.of<SettingsProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
-    final referralCode = user?.referralCode ?? (user?.id != null ? 'PEWARD${user!.id}' : 'T973WC');
+    final referralCode = user?.referralCode ?? (user?.id != null ? 'REWARD${user!.id}' : 'T973WC');
 
     return Scaffold(
       backgroundColor: AppColors.background,

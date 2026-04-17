@@ -14,6 +14,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context).user;
+    // Listening to SettingsProvider to ensure rebuild on color changes
+    Provider.of<SettingsProvider>(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,

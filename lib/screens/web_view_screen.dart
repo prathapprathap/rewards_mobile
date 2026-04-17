@@ -94,7 +94,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircularProgressIndicator(),
+                    CircularProgressIndicator(color: AppColors.primary),
                     const SizedBox(height: 24),
                     Text(
                       'Redirecting to Play Store...',

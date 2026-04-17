@@ -46,6 +46,8 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to SettingsProvider for dynamic color updates
+    Provider.of<SettingsProvider>(context);
     final user = Provider.of<UserProvider>(context).user;
 
     return Scaffold(
@@ -321,9 +323,8 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildTransactionsList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     final filteredList = _isEarningsTab 

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/app_dialog.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -38,24 +39,18 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     final details = _detailsController.text.trim();
 
     if (amountStr.isEmpty || details.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
+      AppDialog.show(context, title: 'Error', message: 'Please fill all fields', type: DialogType.error);
       return;
     }
 
     final double amount = double.tryParse(amountStr) ?? 0;
     if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid amount')),
-      );
+      AppDialog.show(context, title: 'Error', message: 'Invalid amount', type: DialogType.error);
       return;
     }
 
     if (amount > (userProvider.user?.walletBalance ?? 0)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Insufficient balance')),
-      );
+      AppDialog.show(context, title: 'Error', message: 'Insufficient balance', type: DialogType.error);
       return;
     }
 
@@ -74,22 +69,24 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       await api.updatePayoutDetails(userId, details);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Withdrawal request submitted!'),
-            backgroundColor: Colors.green,
-          ),
+        AppDialog.show(
+          context,
+          title: 'Success!',
+          message: 'Withdrawal request submitted!',
+          type: DialogType.success,
+          onConfirm: () {
+            userProvider.refreshUser();
+            Navigator.pop(context);
+          },
         );
-        userProvider.refreshUser();
-        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
+        AppDialog.show(
+          context,
+          title: 'Error',
+          message: e.toString().replaceAll('Exception: ', ''),
+          type: DialogType.error,
         );
       }
     } finally {

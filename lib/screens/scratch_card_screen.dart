@@ -210,7 +210,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
         elevation: 0,
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppColors.accent))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _errorMessage != null
               ? _buildErrorView()
               : _isOfferCompleted

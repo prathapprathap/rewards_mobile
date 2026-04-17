@@ -5,6 +5,7 @@ import '../constants/colors.dart';
 import '../models/offer_model.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/app_dialog.dart';
 
 class OfferwallScreen extends StatefulWidget {
   const OfferwallScreen({super.key});
@@ -155,7 +156,7 @@ class _OfferwallScreenState extends State<OfferwallScreen>
 
   Widget _buildLoader() {
     return Center(
-      child: CircularProgressIndicator(color: AppColors.accent),
+      child: CircularProgressIndicator(color: AppColors.primary),
     );
   }
 
@@ -536,14 +537,13 @@ class _OfferBottomSheetState extends State<_OfferBottomSheet> {
 
         if (launched) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Offer started! Redirecting...'),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-              ),
+            AppDialog.show(
+              context,
+              title: 'Offer Started!',
+              message: 'Redirecting to complete tasks. Follow instructions to earn rewards.',
+              type: DialogType.success,
+              onConfirm: () => Navigator.pop(context),
             );
-            Navigator.pop(context);
           }
         } else {
           throw Exception('Could not launch the browser. Please check your settings.');
@@ -554,12 +554,11 @@ class _OfferBottomSheetState extends State<_OfferBottomSheet> {
     } catch (e) {
       debugPrint('❌ Offer Launch Error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to start offer: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppDialog.show(
+          context,
+          title: 'Error',
+          message: 'Failed to start offer: ${e.toString().replaceAll('Exception: ', '')}',
+          type: DialogType.error,
         );
       }
     } finally {

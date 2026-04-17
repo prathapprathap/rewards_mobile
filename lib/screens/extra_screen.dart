@@ -15,6 +15,8 @@ class ExtraScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to SettingsProvider for dynamic color updates
+    Provider.of<SettingsProvider>(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -77,13 +79,14 @@ class ExtraScreen extends StatelessWidget {
         ],
       ),
       actions: [
-        _buildWalletPill(),
+        _buildWalletPill(context),
         const SizedBox(width: 16),
       ],
     );
   }
 
-  Widget _buildWalletPill() {
+  Widget _buildWalletPill(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -108,7 +111,7 @@ class ExtraScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '3.00',
+            (user?.walletBalance ?? 0.00).toStringAsFixed(2),
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
               color: AppColors.primary,

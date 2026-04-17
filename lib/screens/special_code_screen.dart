@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/reward_dialog.dart';
+import '../widgets/app_dialog.dart';
 
 class SpecialCodeScreen extends StatefulWidget {
   const SpecialCodeScreen({super.key});
@@ -20,7 +20,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
   Future<void> _redeemCode() async {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
-      _showSnack('Please enter a secret code', Colors.orange);
+      _showSnack('Please enter a secret code');
       return;
     }
 
@@ -34,33 +34,31 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
       final result = await api.redeemPromoCode(userId, code);
       
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => RewardDialog(
-            title: 'CONGRATULATIONS! 🎊',
-            message: result['message'] ?? 'Reward claimed successfully.',
-            onConfirm: () {
-              userProvider.refreshUser();
-              _codeController.clear();
-            },
-          ),
+        AppDialog.show(
+          context,
+          title: 'Success!',
+          message: result['message'] ?? 'Reward claimed successfully.',
+          type: DialogType.success,
+          onConfirm: () {
+            userProvider.refreshUser();
+            _codeController.clear();
+          },
         );
       }
     } catch (e) {
-      _showSnack(e.toString().replaceAll('Exception: ', ''), AppColors.error);
+      _showSnack(e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSnack(String message, Color color) {
+  void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppDialog.show(
+      context,
+      title: 'Error',
+      message: message,
+      type: DialogType.error,
     );
   }
 

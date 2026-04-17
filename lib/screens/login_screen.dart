@@ -8,6 +8,7 @@ import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import 'main_layout.dart';
+import '../widgets/app_dialog.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -331,14 +332,11 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
 
   void _showError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: GoogleFonts.inter()),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        margin: const EdgeInsets.all(16),
-      ),
+    AppDialog.show(
+      context,
+      title: 'Sign In Failed',
+      message: msg,
+      type: DialogType.error,
     );
   }
 

@@ -73,12 +73,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to SettingsProvider for dynamic color updates
+    Provider.of<SettingsProvider>(context);
     final user = Provider.of<UserProvider>(context).user;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
@@ -474,6 +476,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTaskItem(dynamic task) {
+    final String? heading = task['heading']?.toString();
+    final bool hasHeading = heading != null && heading.isNotEmpty && heading != 'null';
+
     return GestureDetector(
       onTap: () {
         final offerId = task['id'] is int ? task['id'] : int.tryParse(task['id']?.toString() ?? '0');
@@ -486,66 +491,99 @@ class _HomeScreenState extends State<HomeScreen> {
           ).then((_) => _fetchData());
         }
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: task['icon'] != null
-                    ? Image.network(task['icon'], fit: BoxFit.cover, 
-                        errorBuilder: (c, e, s) => const Icon(Icons.image_outlined))
-                    : const Icon(Icons.image_outlined),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task['offer_name'] ?? 'Task',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: AppColors.primary,
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 4),
-                  _buildRewardPill('+${task['amount'] ?? 0}'),
-                ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: (task['image_url'] != null && task['image_url'].toString().isNotEmpty)
+                        ? Image.network(task['image_url'], fit: BoxFit.cover, 
+                            errorBuilder: (c, e, s) => const Icon(Icons.image_outlined))
+                        : const Icon(Icons.image_outlined),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task['offer_name'] ?? 'Task',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      _buildRewardPill('+${task['amount'] ?? 0}'),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 20),
+                ),
+              ],
+            ),
+          ),
+          if (hasHeading)
+            Positioned(
+              top: -6,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.secondary.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  heading!.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.chevron_right_rounded, color: AppColors.onSurfaceVariant.withOpacity(0.3)),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

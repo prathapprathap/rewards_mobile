@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/reward_dialog.dart';
+import '../widgets/app_dialog.dart';
 
 class DailyCheckInScreen extends StatefulWidget {
   const DailyCheckInScreen({super.key});
@@ -62,28 +62,26 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
         final reward = result['reward'] ?? 0;
         final milestone = result['milestoneReached'] ?? false;
         
-        showDialog(
-          context: context,
-          builder: (context) => RewardDialog(
-            title: milestone ? '30-DAY MILESTONE! 🏆' : 'CHECKED IN! ✅',
-            message: milestone 
-              ? 'Amazing! You completed 30 consecutive days and earned ₹$reward!' 
-              : 'You\'ve checked in for Day ${result['streak']}. Keep it up for the 30-day reward!',
-            onConfirm: () {
-              userProvider.refreshUser();
-              _fetchCheckInStatus();
-            },
-          ),
+        AppDialog.show(
+          context,
+          title: milestone ? 'Jackpot!' : 'Success',
+          message: milestone 
+            ? 'Amazing! You completed 30 consecutive days and earned ₹$reward!' 
+            : 'You\'ve checked in for Day ${result['streak']}. Keep it up for the 30-day reward!',
+          type: DialogType.success,
+          onConfirm: () {
+            userProvider.refreshUser();
+            _fetchCheckInStatus();
+          },
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppDialog.show(
+          context,
+          title: 'Error',
+          message: e.toString().replaceAll('Exception: ', ''),
+          type: DialogType.error,
         );
       }
     } finally {
@@ -93,6 +91,8 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to SettingsProvider for dynamic color updates
+    Provider.of<SettingsProvider>(context);
     final user = Provider.of<UserProvider>(context).user;
     
     return Scaffold(

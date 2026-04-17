@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/app_dialog.dart';
 
 class SpinWheelScreen extends StatefulWidget {
   const SpinWheelScreen({super.key});
@@ -114,8 +115,11 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     } catch (e) {
       print('Error using spin: $e');
       setState(() => _isSpinning = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to spin: $e')),
+      AppDialog.show(
+        context,
+        title: 'Error',
+        message: 'Failed to spin: $e',
+        type: DialogType.error,
       );
     }
   }
@@ -138,28 +142,12 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     // A better approach is to store the reward in a state var in _handleSpin.
     
     if (mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Column(
-            children: [
-              const Icon(Icons.celebration, color: Colors.orange, size: 50),
-              const SizedBox(height: 10),
-              const Text('Congratulations!', style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: const Text(
-            'You have won a reward! Check your wallet.',
-            textAlign: TextAlign.center,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Awesome'),
-            ),
-          ],
-        ),
+      AppDialog.show(
+        context,
+        title: 'Congo!',
+        message: 'You have won a reward! Check your wallet.',
+        type: DialogType.success,
+        buttonText: 'Awesome',
       );
     }
   }

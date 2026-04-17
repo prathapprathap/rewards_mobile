@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'web_view_screen.dart';
+import '../widgets/app_dialog.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
@@ -103,21 +104,23 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     }
   }
 
-  void _showSnack(String msg, Color color) {
+  void _showSnack(String message, [Color? color]) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter()),
-      backgroundColor: color,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      margin: const EdgeInsets.all(16),
-    ));
+    final isError = color == AppColors.error || color == Colors.red;
+    AppDialog.show(
+      context,
+      title: isError ? 'Oops!' : 'Success',
+      message: message,
+      type: isError ? DialogType.error : DialogType.success,
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    // Listen to SettingsProvider for dynamic color updates
+    Provider.of<SettingsProvider>(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: _isLoading
@@ -237,7 +240,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
           ),
           const SizedBox(width: 12),
           Text(
-            'Pewards',
+            'Rewards',
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w800,
               fontSize: 18,
