@@ -6,6 +6,7 @@ import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/wallet_symbol_icon.dart';
+import 'transaction_history_screen.dart';
 import 'withdrawal_screen.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -54,29 +55,34 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(user),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-                  _buildBalanceCard(user),
-                  const SizedBox(height: 32),
-                  _buildTabs(),
-                  const SizedBox(height: 32),
-                  _buildHistoryHeader(),
-                  const SizedBox(height: 16),
-                  _buildTransactionsList(),
-                  const SizedBox(height: 100),
-                ],
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _fetchTransactions,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildAppBar(user),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    _buildBalanceCard(user),
+                    const SizedBox(height: 32),
+                    _buildTabs(),
+                    const SizedBox(height: 32),
+                    _buildHistoryHeader(),
+                    const SizedBox(height: 16),
+                    _buildTransactionsList(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -307,7 +313,14 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TransactionHistoryScreen(isEarnings: _isEarningsTab),
+              ),
+            ).then((_) => _fetchTransactions()); // Refresh when coming back
+          },
           child: Text(
             'VIEW ALL',
             style: GoogleFonts.plusJakartaSans(
@@ -330,9 +343,11 @@ class _WalletScreenState extends State<WalletScreen> {
     final filteredList = _isEarningsTab
         ? _transactions
               .where((tx) => tx['transaction_type'] != 'withdrawal')
+              .take(5) // Only show latest 5
               .toList()
         : _transactions
               .where((tx) => tx['transaction_type'] == 'withdrawal')
+              .take(5) // Only show latest 5
               .toList();
 
     if (filteredList.isEmpty) {
@@ -358,8 +373,10 @@ class _WalletScreenState extends State<WalletScreen> {
     final String type = tx['transaction_type'] ?? 'reward';
     final String description = tx['description'] ?? 'Activity reward';
     final double amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
+    final String status = tx['status']?.toString().toLowerCase() ?? 'success';
+    final String? imageUrl = tx['offer_image'];
     final String date = tx['created_at'] != null
-        ? tx['created_at'].toString().substring(0, 16)
+        ? tx['created_at'].toString().substring(0, 16).replaceAll('T', ' ')
         : 'Recently';
 
     IconData icon;
@@ -369,6 +386,13 @@ class _WalletScreenState extends State<WalletScreen> {
         break;
       case 'referral':
         icon = Icons.share;
+        break;
+      case 'promo':
+      case 'signup_bonus':
+        icon = Icons.stars;
+        break;
+      case 'refund':
+        icon = Icons.undo;
         break;
       case 'withdrawal':
         icon = Icons.account_balance_wallet;
@@ -385,7 +409,7 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -394,12 +418,24 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(2),
+            height: 48,
+            width: 48,
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 28),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: imageUrl != null && imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) =>
+                          Icon(icon, color: AppColors.primary, size: 28),
+                    )
+                  : Icon(icon, color: AppColors.primary, size: 28),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -412,17 +448,25 @@ class _WalletScreenState extends State<WalletScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                    fontSize: 15,
                     color: AppColors.primary,
                   ),
                 ),
-                Text(
-                  date,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceVariant.withOpacity(0.5),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      date,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                      ),
+                    ),
+                    if (type == 'withdrawal') ...[
+                      const SizedBox(width: 8),
+                      _buildStatusBadge(status),
+                    ]
+                  ],
                 ),
               ],
             ),
@@ -436,6 +480,38 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color color;
+    switch (status) {
+      case 'pending':
+        color = Colors.orange;
+        break;
+      case 'success':
+        color = Colors.green;
+        break;
+      case 'rejected':
+        color = Colors.red;
+        break;
+      default:
+        color = Colors.grey;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: GoogleFonts.inter(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: color,
+        ),
       ),
     );
   }

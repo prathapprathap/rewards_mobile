@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import 'package:intl/intl.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
-  const TransactionHistoryScreen({super.key});
+  final bool isEarnings;
+  const TransactionHistoryScreen({super.key, required this.isEarnings});
 
   @override
   State<TransactionHistoryScreen> createState() => _TransactionHistoryScreenState();
@@ -14,338 +15,242 @@ class TransactionHistoryScreen extends StatefulWidget {
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   List<dynamic> _transactions = [];
-  Map<String, dynamic> _walletBreakdown = {};
   bool _isLoading = true;
+  int _page = 1;
+  final int _limit = 20;
+  bool _hasMore = true;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    _fetchTransactions();
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchData() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && _hasMore) {
+        _fetchTransactions(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> _fetchTransactions({bool isLoadMore = false}) async {
+    if (isLoadMore) {
+      _page++;
+    } else {
+      _page = 1;
+      _isLoading = true;
+      if (mounted) setState(() {});
+    }
+
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final userId = userProvider.user?.id;
-
-      if (userId == null) {
-        if (mounted) setState(() => _isLoading = false);
-        return;
-      }
+      if (userId == null) return;
 
       final api = ApiService();
-      final transactions = await api.getTransactionHistory(userId);
-      final walletBreakdown = await api.getWalletBreakdown(userId);
+      final offset = isLoadMore ? _transactions.length : 0;
+      final transactions = await api.getTransactionHistory(userId, limit: _limit, offset: offset);
 
       if (mounted) {
         setState(() {
-          _transactions = transactions;
-          _walletBreakdown = walletBreakdown;
+          if (isLoadMore) {
+            _transactions.addAll(transactions);
+          } else {
+            _transactions = transactions;
+          }
           _isLoading = false;
+          // If we received fewer than the limit, we've reached the end
+          if (transactions.length < _limit) {
+            _hasMore = false;
+          }
         });
       }
     } catch (e) {
-      print('Error fetching transaction data: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String _formatDate(String? dateString) {
-    if (dateString == null) return 'N/A';
-    try {
-      final date = DateTime.parse(dateString);
-      return DateFormat('MMM dd, yyyy hh:mm a').format(date);
-    } catch (e) {
-      return dateString;
-    }
-  }
-
-  IconData _getTransactionIcon(String type) {
-    switch (type) {
-      case 'offer_reward':
-        return Icons.card_giftcard_rounded;
-      case 'referral':
-        return Icons.group_add_rounded;
-      case 'spin':
-        return Icons.casino_rounded;
-      case 'scratch':
-        return Icons.touch_app_rounded;
-      case 'withdrawal':
-        return Icons.account_balance_wallet_rounded;
-      case 'admin_adjustment':
-        return Icons.admin_panel_settings_rounded;
-      default:
-        return Icons.monetization_on_rounded;
-    }
-  }
-
-  Color _getCurrencyColor(String currencyType) {
-    switch (currencyType) {
-      case 'coins':
-        return const Color(0xFFFFB800);
-      case 'gems':
-        return const Color(0xFF9C27B0);
-      case 'cash':
-        return AppColors.success;
-      default:
-        return AppColors.primary;
-    }
-  }
-
-  String _getCurrencySymbol(String currencyType) {
-    return '₹'; // Cash only
-  }
-
   @override
   Widget build(BuildContext context) {
+    final filteredList = widget.isEarnings
+        ? _transactions.where((tx) => tx['transaction_type'] != 'withdrawal').toList()
+        : _transactions.where((tx) => tx['transaction_type'] == 'withdrawal').toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Transaction History',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(gradient: AppColors.headerGradient),
-        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: BackButton(color: AppColors.primary),
+        title: Text(
+          widget.isEarnings ? 'EARNINGS HISTORY' : 'REDEEM HISTORY',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: AppColors.primary,
+          ),
+        ),
       ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchData,
-              color: AppColors.primary,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  // Wallet Breakdown Card
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: AppColors.accentGradient,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.accent.withOpacity(0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Cash Balance',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildWalletItem(
-                              '₹ Cash',
-                              '₹${(double.tryParse(_walletBreakdown['cash']?.toString() ?? '0') ?? 0).toStringAsFixed(2)}',
-                              Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _fetchTransactions,
+        color: AppColors.primary,
+        child: _isLoading && _transactions.isEmpty
+            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : filteredList.isEmpty
+                ? Center(child: Text('No data found', style: GoogleFonts.inter(color: Colors.grey)))
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(20),
+                    itemCount: filteredList.length + (_hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == filteredList.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return _buildTransactionCard(filteredList[index]);
+                    },
                   ),
-
-                  // Transaction List Header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                      child: Text(
-                        'Recent Transactions',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Transaction List
-                  _transactions.isEmpty
-                      ? SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(40),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.receipt_long_outlined,
-                                    size: 64,
-                                    color: AppColors.textTertiary,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No transactions yet',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
-                      : SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final transaction = _transactions[index];
-                                return _buildTransactionCard(transaction);
-                              },
-                              childCount: _transactions.length,
-                            ),
-                          ),
-                        ),
-                ],
-              ),
-            ),
+      ),
     );
   }
 
-  Widget _buildWalletItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildTransactionCard(dynamic tx) {
+    final String type = tx['transaction_type'] ?? 'reward';
+    final String description = tx['description'] ?? 'Activity reward';
+    final double amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
+    final String status = tx['status']?.toString().toLowerCase() ?? 'success';
+    final String date = tx['created_at'] != null 
+        ? tx['created_at'].toString().substring(0, 16).replaceAll('T', ' ') 
+        : 'Recently';
 
-  Widget _buildTransactionCard(dynamic transaction) {
-    final type = transaction['transaction_type'] ?? '';
-    final currencyType = transaction['currency_type'] ?? 'cash';
-    final amount = double.tryParse(transaction['amount']?.toString() ?? '0') ?? 0;
-    final isPositive = amount > 0;
-    final description = transaction['description'] ?? transaction['offer_name'] ?? type;
-    final date = _formatDate(transaction['created_at']);
-    final offerImage = transaction['offer_image'];
+    IconData icon;
+    Color iconColor = AppColors.primary;
+
+    switch (type.toLowerCase()) {
+      case 'spin':
+        icon = Icons.refresh;
+        break;
+      case 'referral':
+        icon = Icons.share;
+        break;
+      case 'promo':
+      case 'signup_bonus':
+        icon = Icons.stars;
+        break;
+      case 'withdrawal':
+        icon = Icons.account_balance_wallet;
+        break;
+      case 'refund':
+        icon = Icons.undo;
+        iconColor = Colors.orange;
+        break;
+      default:
+        icon = Icons.card_giftcard;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Icon or Offer Image
           Container(
-            width: 48,
-            height: 48,
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: offerImage != null ? Colors.transparent : _getCurrencyColor(currencyType).withOpacity(0.1),
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(12),
-              image: (offerImage != null && offerImage.toString().startsWith('http')) ? DecorationImage(
-                image: NetworkImage(offerImage),
-                fit: BoxFit.cover,
-              ) : null,
             ),
-            child: (offerImage == null || !offerImage.toString().startsWith('http')) ? Icon(
-              _getTransactionIcon(type),
-              color: _getCurrencyColor(currencyType),
-              size: 24,
-            ) : null,
+            child: Icon(icon, color: iconColor, size: 24),
           ),
           const SizedBox(width: 16),
-
-          // Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   description,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: AppColors.textPrimary,
-                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: AppColors.primary,
                   ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      date,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    if (type == 'withdrawal') ...[
+                      const SizedBox(width: 8),
+                      _buildStatusBadge(status),
+                    ]
+                  ],
                 ),
               ],
             ),
           ),
-
-          // Amount
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${isPositive ? '+' : ''}${_getCurrencySymbol(currencyType)}${amount.abs().toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isPositive ? AppColors.success : AppColors.error,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _getCurrencyColor(currencyType).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  currencyType.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: _getCurrencyColor(currencyType),
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            '${amount >= 0 ? '+' : ''}${amount.toStringAsFixed(0)}',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              color: amount >= 0 ? Colors.green : Colors.red,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color color;
+    switch (status) {
+      case 'pending': color = Colors.orange; break;
+      case 'success': color = Colors.green; break;
+      case 'rejected': color = Colors.red; break;
+      default: color = Colors.grey;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: GoogleFonts.inter(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: color,
+        ),
       ),
     );
   }

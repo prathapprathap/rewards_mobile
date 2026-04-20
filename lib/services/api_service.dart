@@ -331,11 +331,12 @@ class ApiService {
   Future<List<dynamic>> getTransactionHistory(
     int userId, {
     int limit = 50,
+    int offset = 0,
   }) async {
     try {
       final response = await http.get(
         Uri.parse(
-          '${ApiConstants.baseUrl}/offer18/transactions/$userId?limit=$limit',
+          '${ApiConstants.baseUrl}/offer18/transactions/$userId?limit=$limit&offset=$offset',
         ),
       );
 
