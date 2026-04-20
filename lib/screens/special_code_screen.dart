@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/app_dialog.dart';
+import '../widgets/custom_toast.dart';
 
 class SpecialCodeScreen extends StatefulWidget {
   const SpecialCodeScreen({super.key});
@@ -34,16 +34,13 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
       final result = await api.redeemPromoCode(userId, code);
       
       if (mounted) {
-        AppDialog.show(
+        CustomToast.show(
           context,
+          result['message'] ?? 'Reward claimed successfully.',
           title: 'Success!',
-          message: result['message'] ?? 'Reward claimed successfully.',
-          type: DialogType.success,
-          onConfirm: () {
-            userProvider.refreshUser();
-            _codeController.clear();
-          },
         );
+        userProvider.refreshUser();
+        _codeController.clear();
       }
     } catch (e) {
       _showSnack(e.toString().replaceAll('Exception: ', ''));
@@ -54,11 +51,11 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
 
   void _showSnack(String message) {
     if (!mounted) return;
-    AppDialog.show(
+    CustomToast.show(
       context,
+      message,
       title: 'Error',
-      message: message,
-      type: DialogType.error,
+      isError: true,
     );
   }
 

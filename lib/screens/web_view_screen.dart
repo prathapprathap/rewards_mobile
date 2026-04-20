@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
 import '../constants/colors.dart';
 
 class WebViewScreen extends StatefulWidget {
@@ -26,62 +27,75 @@ class _WebViewScreenState extends State<WebViewScreen> {
   void initState() {
     super.initState();
 
-    // Initialize controller synchronously to avoid LateInitializationError
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onNavigationRequest: (NavigationRequest request) {
-            final url = request.url;
-            debugPrint('🌐 WebView Navigating to: $url');
-            if (_shouldOpenExternally(url)) {
-              _launchStore(url);
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
-          onPageStarted: (String url) {
-            if (!mounted) return;
-            setState(() {
-              _currentUrl = url;
-              _isPageLoading = true;
-              _errorMessage = null;
-            });
-            if (_shouldOpenExternally(url)) {
-              _launchStore(url);
-            }
-          },
-          onPageFinished: (String url) {
-            if (!mounted) return;
-            setState(() {
-              _currentUrl = url;
-              _isPageLoading = false;
-            });
-          },
-          onUrlChange: (change) {
-            final url = change.url;
-            if (!mounted || url == null) return;
-            setState(() => _currentUrl = url);
-            if (_shouldOpenExternally(url)) {
-              _launchStore(url);
-            }
-          },
-          onWebResourceError: (error) {
-            debugPrint('❌ WebView Error: ${error.description}');
-            if (_shouldOpenInBrowserAfterError(error.description)) {
-              _openOfferExternally(_currentUrl ?? widget.url);
-              return;
-            }
-            if (!mounted) return;
-            setState(() {
-              _isPageLoading = false;
-              _errorMessage = error.description;
-            });
-          },
-        ),
-      );
+_controller = WebViewController()
+  ..setJavaScriptMode(JavaScriptMode.unrestricted)
+  ..setNavigationDelegate(
+    NavigationDelegate(
+      onNavigationRequest: (request) {
+        final url = request.url;
+        debugPrint('🌐 WebView Navigating to: $url');
 
-    _startDeepLinkFlow();
+        if (_shouldOpenExternally(url)) {
+          _launchStore(url);
+          return NavigationDecision.prevent;
+        }
+        return NavigationDecision.navigate;
+      },
+
+      onPageStarted: (url) {
+        if (!mounted) return;
+        setState(() {
+          _currentUrl = url;
+          _isPageLoading = true;
+          _errorMessage = null;
+        });
+
+        if (_shouldOpenExternally(url)) {
+          _launchStore(url);
+        }
+      },
+
+      onPageFinished: (url) {
+        if (!mounted) return;
+        setState(() {
+          _currentUrl = url;
+          _isPageLoading = false;
+        });
+      },
+
+      onUrlChange: (change) {
+        final url = change.url;
+        if (!mounted || url == null) return;
+
+        setState(() => _currentUrl = url);
+
+        if (_shouldOpenExternally(url)) {
+          _launchStore(url);
+        }
+      },
+
+      onWebResourceError: (error) {
+        debugPrint('❌ WebView Error: ${error.description}');
+
+        final desc = error.description.toLowerCase();
+
+        if (desc.contains('err_cleartext_not_permitted') ||
+            desc.contains('err_blocked_by_orb') ||
+            desc.contains('err_unknown_url_scheme')) {
+          _openOfferExternally(_currentUrl ?? widget.url);
+          return;
+        }
+
+        if (!mounted) return;
+        setState(() {
+          _isPageLoading = false;
+          _errorMessage = error.description;
+        });
+      },
+    ),
+  );
+
+_startDeepLinkFlow();
   }
 
   Future<void> _startDeepLinkFlow() async {
@@ -129,38 +143,42 @@ class _WebViewScreenState extends State<WebViewScreen> {
         message.contains('err_unknown_url_scheme');
   }
 
-  Future<void> _openOfferExternally(String url) async {
-    if (_isRedirected) return;
-    if (mounted) {
-      setState(() {
-        _isRedirected = true;
-        _isPageLoading = false;
-      });
-    }
-
-    try {
-      final launched = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
-      );
-      if (!mounted) return;
-      if (launched) {
-        Navigator.pop(context, true);
-        return;
-      }
-
-      setState(() {
-        _isRedirected = false;
-        _errorMessage = 'Could not open this offer in your browser.';
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isRedirected = false;
-        _errorMessage = 'Could not open this offer in your browser.';
-      });
-    }
+ Future<void> _openOfferExternally(String url) async {
+  if (_isRedirected) return;
+  if (mounted) {
+    setState(() {
+      _isRedirected = true;
+      _isPageLoading = false;
+    });
   }
+
+  // Upgrade HTTP to HTTPS before opening
+  final safeUrl = url.startsWith('http://')
+      ? url.replaceFirst('http://', 'https://')
+      : url;
+
+  try {
+    final launched = await launchUrl(
+      Uri.parse(safeUrl),
+      mode: LaunchMode.inAppBrowserView,
+    );
+    if (!mounted) return;
+    if (launched) {
+      Navigator.pop(context, true);
+      return;
+    }
+    setState(() {
+      _isRedirected = false;
+      _errorMessage = 'Could not open this offer in your browser.';
+    });
+  } catch (_) {
+    if (!mounted) return;
+    setState(() {
+      _isRedirected = false;
+      _errorMessage = 'Could not open this offer in your browser.';
+    });
+  }
+}
 
   Future<void> _launchStore(String url) async {
     if (_isRedirected) return;

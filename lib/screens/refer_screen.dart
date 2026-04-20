@@ -8,6 +8,7 @@ import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/wallet_symbol_icon.dart';
+import '../widgets/custom_toast.dart';
 
 class ReferScreen extends StatefulWidget {
   const ReferScreen({super.key});
@@ -278,9 +279,7 @@ class _ReferScreenState extends State<ReferScreen> {
           GestureDetector(
             onTap: () {
               Clipboard.setData(ClipboardData(text: code));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Code Copied!')));
+              CustomToast.show(context, 'Code Copied!');
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -452,9 +451,7 @@ class _ReferScreenState extends State<ReferScreen> {
 
     if (userId == null) return;
     if (code.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please enter a referral code')),
-      );
+      CustomToast.show(context, 'Please enter a referral code', isError: true);
       return;
     }
 
@@ -465,17 +462,16 @@ class _ReferScreenState extends State<ReferScreen> {
       _referralCodeController.clear();
       await userProvider.refreshUser();
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            result['message'] ?? 'Referral code applied successfully',
-          ),
-        ),
+      CustomToast.show(
+        context,
+        result['message'] ?? 'Referral code applied successfully',
       );
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      CustomToast.show(
+        context,
+        e.toString().replaceAll('Exception: ', ''),
+        isError: true,
       );
     } finally {
       if (mounted) {

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'web_view_screen.dart';
-import '../widgets/app_dialog.dart';
+import '../widgets/custom_toast.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
@@ -112,6 +112,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       return;
     }
 
+
     setState(() => _isStarting = true);
     try {
       final api = ApiService();
@@ -126,21 +127,25 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
           ? trackingData['trackingUrl'] as String
           : _offerDetails?['offer_url'] as String?;
 
-      if (trackingUrl != null && trackingUrl.isNotEmpty) {
+final safeUrl = trackingUrl?.startsWith('http://') == true
+    ? trackingUrl!.replaceFirst('http://', 'https://')
+    : trackingUrl;
+
+      if (safeUrl != null && safeUrl.isNotEmpty) {
         if (!mounted) return;
         
         // Check if it's a Play Store URL
-        if (_isPlayStoreUrl(trackingUrl)) {
+        if (_isPlayStoreUrl(safeUrl)) {
           // Open Play Store app directly
-          await _openPlayStore(trackingUrl);
-        } else {
+          await _openPlayStore(safeUrl);
+        } else {  
           // Open in WebView for other URLs
           final navigator = Navigator.of(context);
           final offerName = _offerDetails?['offer_name'] ?? 'Offer';
           final result = await navigator.push(
             MaterialPageRoute(
               builder: (context) =>
-                  WebViewScreen(url: trackingUrl, offerName: offerName),
+                  WebViewScreen(url: safeUrl, offerName: offerName),
             ),
           );
 
@@ -168,11 +173,11 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
   void _showSnack(String message, [Color? color]) {
     if (!mounted) return;
     final isError = color == AppColors.error || color == Colors.red;
-    AppDialog.show(
+    CustomToast.show(
       context,
+      message,
       title: isError ? 'Oops!' : 'Success',
-      message: message,
-      type: isError ? DialogType.error : DialogType.success,
+      isError: isError,
     );
   }
 

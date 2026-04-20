@@ -5,7 +5,7 @@ import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/app_dialog.dart';
+import '../widgets/custom_toast.dart';
 
 class DailyCheckInScreen extends StatefulWidget {
   const DailyCheckInScreen({super.key});
@@ -70,26 +70,23 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
         final reward = result['reward'] ?? 0;
         final milestone = result['milestoneReached'] ?? false;
 
-        AppDialog.show(
+        CustomToast.show(
           context,
-          title: milestone ? 'Jackpot!' : 'Success',
-          message: milestone
+          milestone
               ? 'Amazing! You completed 30 consecutive days and earned ₹$reward!'
               : 'You\'ve checked in for Day ${result['streak']}. Keep it up for the 30-day reward!',
-          type: DialogType.success,
-          onConfirm: () {
-            userProvider.refreshUser();
-            _fetchCheckInStatus();
-          },
+          title: milestone ? 'Jackpot!' : 'Success',
         );
+        userProvider.refreshUser();
+        _fetchCheckInStatus();
       }
     } catch (e) {
       if (mounted) {
-        AppDialog.show(
+        CustomToast.show(
           context,
+          e.toString().replaceAll('Exception: ', ''),
           title: 'Error',
-          message: e.toString().replaceAll('Exception: ', ''),
-          type: DialogType.error,
+          isError: true,
         );
       }
     } finally {

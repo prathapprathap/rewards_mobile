@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/app_dialog.dart';
+import '../widgets/custom_toast.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -39,18 +39,18 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     final details = _detailsController.text.trim();
 
     if (amountStr.isEmpty || details.isEmpty) {
-      AppDialog.show(context, title: 'Error', message: 'Please fill all fields', type: DialogType.error);
+      CustomToast.show(context, 'Please fill all fields', title: 'Error', isError: true);
       return;
     }
 
     final double amount = double.tryParse(amountStr) ?? 0;
     if (amount <= 0) {
-      AppDialog.show(context, title: 'Error', message: 'Invalid amount', type: DialogType.error);
+      CustomToast.show(context, 'Invalid amount', title: 'Error', isError: true);
       return;
     }
 
     if (amount > (userProvider.user?.walletBalance ?? 0)) {
-      AppDialog.show(context, title: 'Error', message: 'Insufficient balance', type: DialogType.error);
+      CustomToast.show(context, 'Insufficient balance', title: 'Error', isError: true);
       return;
     }
 
@@ -69,24 +69,21 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       await api.updatePayoutDetails(userId, details);
 
       if (mounted) {
-        AppDialog.show(
+        CustomToast.show(
           context,
+          'Withdrawal request submitted!',
           title: 'Success!',
-          message: 'Withdrawal request submitted!',
-          type: DialogType.success,
-          onConfirm: () {
-            userProvider.refreshUser();
-            Navigator.pop(context);
-          },
         );
+        userProvider.refreshUser();
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        AppDialog.show(
+        CustomToast.show(
           context,
+          e.toString().replaceAll('Exception: ', ''),
           title: 'Error',
-          message: e.toString().replaceAll('Exception: ', ''),
-          type: DialogType.error,
+          isError: true,
         );
       }
     } finally {

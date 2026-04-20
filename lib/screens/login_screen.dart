@@ -8,7 +8,7 @@ import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import 'main_layout.dart';
-import '../widgets/app_dialog.dart';
+import '../widgets/custom_toast.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -332,11 +332,11 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
 
   void _showError(String msg) {
     if (!mounted) return;
-    AppDialog.show(
+    CustomToast.show(
       context,
+      msg,
       title: 'Sign In Failed',
-      message: msg,
-      type: DialogType.error,
+      isError: true,
     );
   }
 

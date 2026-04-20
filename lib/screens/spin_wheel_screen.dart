@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/app_dialog.dart';
+import '../widgets/custom_toast.dart';
 
 class SpinWheelScreen extends StatefulWidget {
   const SpinWheelScreen({super.key});
@@ -115,11 +115,11 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     } catch (e) {
       print('Error using spin: $e');
       setState(() => _isSpinning = false);
-      AppDialog.show(
+      CustomToast.show(
         context,
+        'Failed to spin: $e',
         title: 'Error',
-        message: 'Failed to spin: $e',
-        type: DialogType.error,
+        isError: true,
       );
     }
   }
@@ -142,12 +142,10 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     // A better approach is to store the reward in a state var in _handleSpin.
     
     if (mounted) {
-      AppDialog.show(
+      CustomToast.show(
         context,
+        'You have won a reward! Check your wallet.',
         title: 'Congo!',
-        message: 'You have won a reward! Check your wallet.',
-        type: DialogType.success,
-        buttonText: 'Awesome',
       );
     }
   }
