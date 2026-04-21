@@ -16,8 +16,10 @@ class DailyCheckInScreen extends StatefulWidget {
 
 class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
   bool _isLoading = false;
+  bool _isInitialLoading = true; // Added to prevent flickering
   int _currentDay = 1;
   bool _alreadyCheckedInToday = false;
+  List<DateTime> _historyDates = []; // Track actual dates
   List<bool> _checkInHistory = List.generate(30, (index) => false);
 
   @override
@@ -32,6 +34,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
     if (userId == null) return;
 
     try {
+      if (mounted) setState(() => _isInitialLoading = true);
       final api = ApiService();
       final data = await api.getCheckInHistory(userId);
 
@@ -40,18 +43,27 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
           final int streak = int.tryParse(data['streak'].toString()) ?? 0;
           final List<dynamic> history =
               (data['history'] as List<dynamic>?) ?? [];
-          final bool alreadyCheckedToday = history.any(_isTodayEntry);
+          
+          _historyDates = history.map((e) => DateTime.parse(e.toString())).toList();
+          final bool alreadyCheckedToday = _historyDates.any(_isTodayEntry);
 
           _alreadyCheckedInToday = alreadyCheckedToday;
-          _currentDay = alreadyCheckedToday
-              ? (streak == 0 ? 1 : streak)
-              : (streak >= 30 ? 30 : streak + 1);
+          
+          // Logic: If already done today, show current streak day. 
+          // If not done today, show the NEXT day to be completed.
+          if (alreadyCheckedToday) {
+            _currentDay = streak == 0 ? 1 : streak;
+          } else {
+            _currentDay = streak >= 30 ? 30 : streak + 1;
+          }
 
           _checkInHistory = List.generate(30, (index) => index < streak);
+          _isInitialLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Error fetching check-in status: $e');
+      if (mounted) setState(() => _isInitialLoading = false);
     }
   }
 
@@ -115,53 +127,61 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
             children: [
               _buildAppBar(context, user),
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
-                      _buildMainRewardIcon(),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Day ${_currentDay > 30 ? 30 : _currentDay}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text(
-                          _currentDay >= 30 && !_alreadyCheckedInToday
-                              ? 'CONGRATULATIONS! You have completed your 30-day streak. Claim your grand reward now!'
-                              : _alreadyCheckedInToday
-                              ? 'Today\'s check-in is already completed. Come back tomorrow to continue your streak.'
-                              : 'Check in for 30 consecutive days to unlock the grand reward. If you miss a day, your progress resets.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w500,
-                            height: 1.5,
+                child: _isInitialLoading 
+                  ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 40),
+                          _buildMainRewardIcon(),
+                          const SizedBox(height: 24),
+                          Text(
+                            'Day ${_currentDay > 30 ? 30 : _currentDay}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF1A1A1A),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Text(
+                              _currentCheckInStatusText(),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          _buildClaimButton(),
+                          const SizedBox(height: 40),
+                          _buildStatisticsSection(),
+                          const SizedBox(height: 40),
+                        ],
                       ),
-                      const SizedBox(height: 32),
-                      _buildClaimButton(),
-                      const SizedBox(height: 40),
-                      _buildStatisticsSection(),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
+                    ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _currentCheckInStatusText() {
+    if (_currentDay >= 30 && !_alreadyCheckedInToday) {
+      return 'CONGRATULATIONS! You have completed your 30-day streak. Claim your grand reward now!';
+    } else if (_alreadyCheckedInToday) {
+      return 'Today\'s check-in is already completed. Come back tomorrow to continue your streak.';
+    } else {
+      return 'Check in for 30 consecutive days to unlock the grand reward. If you miss a day, your progress resets.';
+    }
   }
 
   Widget _buildAppBar(BuildContext context, dynamic user) {

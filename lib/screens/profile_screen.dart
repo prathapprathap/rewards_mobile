@@ -227,7 +227,36 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.star_border_rounded,
             iconColor: Colors.orange,
             label: 'RATE US',
-            onTap: () {},
+            onTap: () async {
+              final settings = Provider.of<SettingsProvider>(
+                context,
+                listen: false,
+              );
+              // Try app-specific Play Store URL from settings, fallback to package name
+              final packageName = settings.getString('app_package_name', '');
+              final storeUrl = packageName.isNotEmpty
+                  ? 'market://details?id=$packageName'
+                  : 'https://play.google.com/store/apps';
+              try {
+                final uri = Uri.parse(storeUrl);
+                final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                if (!launched) {
+                  // Fallback to web Play Store
+                  final webUri = Uri.parse(
+                    packageName.isNotEmpty
+                        ? 'https://play.google.com/store/apps/details?id=$packageName'
+                        : 'https://play.google.com/store/apps',
+                  );
+                  await launchUrl(webUri, mode: LaunchMode.externalApplication);
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open Play Store')),
+                  );
+                }
+              }
+            },
           ),
           const SizedBox(height: 16),
           _buildSettingsItem(
@@ -241,8 +270,27 @@ class ProfileScreen extends StatelessWidget {
               );
               final url = settings.getString('whatsapp_link', '');
               if (url.isNotEmpty) {
-                final uri = Uri.parse(url);
-                if (await canLaunchUrl(uri)) await launchUrl(uri);
+                try {
+                  final uri = Uri.parse(url);
+                  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (!launched && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open WhatsApp')),
+                    );
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open WhatsApp')),
+                    );
+                  }
+                }
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('WhatsApp link not configured')),
+                  );
+                }
               }
             },
           ),
@@ -258,8 +306,16 @@ class ProfileScreen extends StatelessWidget {
               );
               final url = settings.getString('telegram_link', '');
               if (url.isNotEmpty) {
-                final uri = Uri.parse(url);
-                if (await canLaunchUrl(uri)) await launchUrl(uri);
+                try {
+                  final uri = Uri.parse(url);
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open Telegram')),
+                    );
+                  }
+                }
               }
             },
           ),
@@ -268,14 +324,67 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.help_outline_rounded,
             iconColor: Colors.red,
             label: 'HELP & SUPPORT',
-            onTap: () {},
+            onTap: () async {
+              final settings = Provider.of<SettingsProvider>(
+                context,
+                listen: false,
+              );
+              final email = settings.getString('support_email', 'support@rewardmobi.xyz');
+              final siteName = settings.getString('site_name', 'Rupi Rewards');
+              try {
+                final uri = Uri(
+                  scheme: 'mailto',
+                  path: email,
+                  queryParameters: {
+                    'subject': '$siteName - Help & Support',
+                  },
+                );
+                await launchUrl(uri);
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Contact us at $email')),
+                  );
+                }
+              }
+            },
           ),
           const SizedBox(height: 16),
           _buildSettingsItem(
             icon: Icons.privacy_tip_outlined,
             iconColor: Colors.blueGrey,
             label: 'PRIVACY POLICY',
-            onTap: () {},
+            onTap: () async {
+              final settings = Provider.of<SettingsProvider>(
+                context,
+                listen: false,
+              );
+              final url = settings.getString('privacy_policy_url', '');
+              final siteUrl = settings.getString('site_url', '');
+              final policyUrl = url.isNotEmpty
+                  ? url
+                  : siteUrl.isNotEmpty
+                      ? '${siteUrl.endsWith('/') ? siteUrl : '$siteUrl/'}privacy-policy'
+                      : '';
+              if (policyUrl.isNotEmpty) {
+                try {
+                  final uri = Uri.parse(policyUrl);
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open Privacy Policy')),
+                    );
+                  }
+                }
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Privacy policy URL not configured')),
+                  );
+                }
+              }
+            },
           ),
           const SizedBox(height: 32),
           _buildSettingsItem(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,7 @@ import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'offer_detail_screen.dart';
 import 'offerwall_screen.dart';
+import 'refer_screen.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/wallet_symbol_icon.dart';
 
@@ -21,11 +23,119 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _offers = [];
   bool _isLoading = true;
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _timer;
+
+  final List<Map<String, dynamic>> _defaultBanners = [
+    {
+      'title': 'REF-EARN',
+      'subtitle': 'REFER AND\nEARN',
+      'action': 'INVITE FRIENDS NOW! ✦',
+      'type': 'refer',
+      'image_url': null,
+      'color1': const Color(0xFF6A11CB),
+      'color2': const Color(0xFF2575FC),
+      'icon': Icons.share_rounded,
+    },
+    {
+      'title': 'OFFERS',
+      'subtitle': 'TASK AND\nEARN',
+      'action': 'START EARNING NOW! ✦',
+      'type': 'offers',
+      'image_url': null,
+      'color1': const Color(0xFF00B4DB),
+      'color2': const Color(0xFF0083B0),
+      'icon': Icons.card_giftcard,
+    },
+    {
+      'title': 'TELEGRAM',
+      'subtitle': 'JOIN OUR\nCHANNEL',
+      'action': 'GET PROMO CODES! ✦',
+      'type': 'telegram',
+      'image_url': null,
+      'color1': const Color(0xFF0088CC),
+      'color2': const Color(0xFF24A1DE),
+      'icon': Icons.telegram,
+    },
+  ];
+
+  List<dynamic> _banners = [];
 
   @override
   void initState() {
     super.initState();
+    _banners = _defaultBanners; // Initialize with defaults
+    _pageController = PageController(initialPage: 0);
     _fetchData();
+    _fetchBanners();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        _currentPage = (_currentPage + 1) % _banners.length;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    });
+  }
+
+  Future<void> _fetchBanners() async {
+    try {
+      final api = ApiService();
+      final banners = await api.getBanners();
+      if (mounted && banners.isNotEmpty) {
+        setState(() {
+          _banners = banners.map((b) {
+            // Map action_type and other fields for UI
+            final type = b['action_type']?.toString().toLowerCase() ?? 'url';
+            IconData icon = Icons.star_rounded;
+            Color c1 = const Color(0xFF6A11CB);
+            Color c2 = const Color(0xFF2575FC);
+
+            if (type == 'refer') {
+              icon = Icons.share_rounded;
+              c1 = const Color(0xFF6A11CB);
+              c2 = const Color(0xFF2575FC);
+            } else if (type == 'offers') {
+              icon = Icons.card_giftcard;
+              c1 = const Color(0xFF00C9FF);
+              c2 = const Color(0xFF92FE9D);
+            } else if (type == 'telegram') {
+              icon = Icons.telegram;
+              c1 = const Color(0xFF0088CC);
+              c2 = const Color(0xFF24A1DE);
+            }
+
+            return {
+              'id': b['id'],
+              'subtitle': (b['subtitle'] ?? b['title'] ?? '').toString().replaceAll('\\n', '\n'),
+              'action': b['title'] ?? 'CLICK HERE! ✦',
+              'type': type,
+              'value': b['action_value'],
+              'image_url': b['image_url'],
+              'color1': c1,
+              'color2': c2,
+              'icon': icon,
+            };
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching banners: $e');
+    }
   }
 
   Future<void> _fetchData() async {
@@ -214,84 +324,159 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroCarousel() {
-    return Container(
-      height: 160,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0083B0).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            bottom: -20,
-            child: Icon(
-              Icons.card_giftcard,
-              size: 140,
-              color: Colors.white.withOpacity(0.15),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'TASK AND\nEARN',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'INVITE FRIENDS NOW! ✦',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 12,
-            right: 0,
-            left: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [_buildDot(true), _buildDot(false), _buildDot(false)],
-            ),
-          ),
-        ],
+    return SizedBox(
+      height: 180,
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemCount: _banners.length,
+        itemBuilder: (context, index) {
+          final banner = _banners[index];
+          return _buildBannerItem(banner);
+        },
       ),
     );
+  }
+
+  Widget _buildBannerItem(Map<String, dynamic> banner) {
+    return GestureDetector(
+      onTap: () => _handleBannerClick(banner),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            colors: [banner['color1'], banner['color2']],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: banner['color2'].withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            if (banner['image_url'] != null && banner['image_url'].toString().isNotEmpty)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.network(
+                    banner['image_url'],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox(),
+                  ),
+                ),
+              ),
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Icon(
+                banner['icon'],
+                size: 140,
+                color: Colors.white.withOpacity(0.15),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: banner['image_url'] != null 
+                  ? LinearGradient(
+                      colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    )
+                  : null,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    banner['subtitle'],
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      banner['action'],
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              bottom: 16,
+              right: 24,
+              child: Row(
+                children: List.generate(
+                  _banners.length,
+                  (i) => _buildDot(i == _currentPage),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleBannerClick(Map<String, dynamic> banner) async {
+    final type = banner['type']?.toString().toLowerCase();
+    final value = banner['value']?.toString();
+
+    switch (type) {
+      case 'refer':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ReferScreen()),
+        );
+        break;
+      case 'offers':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OfferwallScreen()),
+        );
+        break;
+      case 'url':
+        if (value != null && value.isNotEmpty) {
+          final uri = Uri.parse(value);
+          if (await canLaunchUrl(uri)) await launchUrl(uri);
+        }
+        break;
+      case 'telegram':
+        final settings = Provider.of<SettingsProvider>(context, listen: false);
+        final url = value ?? settings.getString('telegram_link', '');
+        if (url.isNotEmpty) {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) await launchUrl(uri);
+        }
+        break;
+    }
   }
 
   Widget _buildDot(bool active) {

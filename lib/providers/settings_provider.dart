@@ -41,4 +41,6 @@ class SettingsProvider with ChangeNotifier {
   double getDouble(String key, double defaultValue) {
     return double.tryParse(_settings[key]?.toString() ?? '') ?? defaultValue;
   }
+
+  String get currencySymbol => getString('currency_symbol', '₹');
 }

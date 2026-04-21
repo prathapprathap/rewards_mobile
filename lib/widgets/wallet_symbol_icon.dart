@@ -27,7 +27,7 @@ class WalletSymbolIcon extends StatelessWidget {
         width: size,
         height: size,
         fit: fit,
-        errorBuilder: (_, __, ___) => _buildFallback(),
+        errorBuilder: (_, __, ___) => _buildFallback(settings),
       );
     }
 
@@ -36,15 +36,33 @@ class WalletSymbolIcon extends StatelessWidget {
       width: size,
       height: size,
       fit: fit,
-      errorBuilder: (_, __, ___) => _buildFallback(),
+      errorBuilder: (_, __, ___) => _buildFallback(settings),
     );
   }
 
-  Widget _buildFallback() {
-    return Icon(
-      Icons.monetization_on,
-      color: fallbackColor ?? AppColors.coinGold,
-      size: size,
+  Widget _buildFallback(SettingsProvider settings) {
+    final symbol = settings.currencySymbol;
+    // Use currency_rupee icon for ₹, else show text symbol
+    if (symbol == '₹') {
+      return Icon(
+        Icons.currency_rupee,
+        color: fallbackColor ?? AppColors.coinGold,
+        size: size,
+      );
+    }
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Center(
+        child: Text(
+          symbol,
+          style: TextStyle(
+            fontSize: size * 0.7,
+            fontWeight: FontWeight.w800,
+            color: fallbackColor ?? AppColors.coinGold,
+          ),
+        ),
+      ),
     );
   }
 }

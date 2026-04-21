@@ -23,8 +23,6 @@ class _ReferScreenState extends State<ReferScreen> {
     'successful_referrals': 0,
     'total_commission': 0.0,
   };
-  final TextEditingController _referralCodeController = TextEditingController();
-  bool _isApplyingReferralCode = false;
 
   @override
   void initState() {
@@ -34,7 +32,6 @@ class _ReferScreenState extends State<ReferScreen> {
 
   @override
   void dispose() {
-    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -85,7 +82,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   _buildReferralCodeCard(context, referralCode),
                   const SizedBox(height: 20),
                   if (!hasAppliedReferralCode) ...[
-                    _buildReferralEntryCard(context),
+                    _buildReferralAutoDetectInfo(),
                     const SizedBox(height: 24),
                   ] else ...[
                     _buildReferralVerifiedCard(user!.referredBy!),
@@ -302,86 +299,53 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 
-  Widget _buildReferralEntryCard(BuildContext context) {
+  Widget _buildReferralAutoDetectInfo() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(35),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.primary.withOpacity(0.12)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'ENTER REFERRAL CODE',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.onSurfaceVariant.withOpacity(0.5),
-              letterSpacing: 0.8,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.info_outline_rounded,
+              color: Colors.orange,
+              size: 22,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'You can verify a referral code only one time after login.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurfaceVariant.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _referralCodeController,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: 'Enter referral code',
-              filled: true,
-              fillColor: AppColors.surfaceContainerLowest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isApplyingReferralCode
-                  ? null
-                  : () => _applyReferralCode(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'NO REFERRAL APPLIED',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                    letterSpacing: 0.8,
+                  ),
                 ),
-              ),
-              child: _isApplyingReferralCode
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      'VERIFY REFERRAL CODE',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  'Referral codes are auto-applied during signup via invite links.',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -441,43 +405,6 @@ class _ReferScreenState extends State<ReferScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _applyReferralCode(BuildContext context) async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final userId = userProvider.user?.id;
-    final code = _referralCodeController.text.trim().toUpperCase();
-    final messenger = ScaffoldMessenger.of(context);
-
-    if (userId == null) return;
-    if (code.isEmpty) {
-      CustomToast.show(context, 'Please enter a referral code', isError: true);
-      return;
-    }
-
-    setState(() => _isApplyingReferralCode = true);
-    try {
-      final api = ApiService();
-      final result = await api.applyReferralCode(userId, code);
-      _referralCodeController.clear();
-      await userProvider.refreshUser();
-      if (!mounted) return;
-      CustomToast.show(
-        context,
-        result['message'] ?? 'Referral code applied successfully',
-      );
-    } catch (e) {
-      if (!mounted) return;
-      CustomToast.show(
-        context,
-        e.toString().replaceAll('Exception: ', ''),
-        isError: true,
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isApplyingReferralCode = false);
-      }
-    }
   }
 
   Widget _buildStatCard(String label, String value, IconData icon) {
@@ -622,6 +549,31 @@ class _ReferScreenState extends State<ReferScreen> {
   }
 
   Widget _buildWhatsappFab(BuildContext context, String code) {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final siteName = settings.getString('site_name', 'Rupi Rewards');
+    final siteUrl = settings.getString('site_url', '').trim();
+    final apkUrl = settings.getString('apk_download_url', '').trim();
+
+    // Build download link with embedded referral code
+    String downloadLink = '';
+    if (apkUrl.isNotEmpty) {
+      // Direct APK link — append referral code as query param
+      downloadLink = apkUrl.contains('?')
+          ? '$apkUrl&ref=$code'
+          : '$apkUrl?ref=$code';
+    } else if (siteUrl.isNotEmpty) {
+      // Fallback to backend download endpoint
+      final base = siteUrl.endsWith('/') ? siteUrl.substring(0, siteUrl.length - 1) : siteUrl;
+      downloadLink = '$base/api/download/$code';
+    }
+
+    final shareMessage = downloadLink.isNotEmpty
+        ? '🎉 Join $siteName and earn real cash rewards!\n\n'
+            '📲 Download now: $downloadLink\n\n'
+            '🎁 My referral code: $code\n'
+            'Use my code during signup to get bonus rewards!'
+        : '🎉 Join $siteName using my referral code $code and earn unlimited rewards!';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -629,13 +581,11 @@ class _ReferScreenState extends State<ReferScreen> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
-                Share.share(
-                  'Use my referral code $code to join Peward and earn unlimited rewards!',
-                );
+                Share.share(shareMessage);
               },
               icon: const Icon(Icons.chat_bubble_rounded),
               label: Text(
-                'WHATSAPP',
+                'SHARE',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
@@ -657,9 +607,8 @@ class _ReferScreenState extends State<ReferScreen> {
           const SizedBox(width: 12),
           GestureDetector(
             onTap: () {
-              Share.share(
-                'Join Peward using my code $code and earn cash daily!',
-              );
+              Clipboard.setData(ClipboardData(text: shareMessage));
+              CustomToast.show(context, 'Share message copied!');
             },
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -667,7 +616,7 @@ class _ReferScreenState extends State<ReferScreen> {
                 color: Colors.black,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.share_outlined, color: Colors.white),
+              child: const Icon(Icons.copy_rounded, color: Colors.white),
             ),
           ),
         ],
@@ -675,3 +624,4 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 }
+
