@@ -321,53 +321,91 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
   }
 
   Widget _buildClaimButton() {
-    final bool isMilestoneDay = (_currentDay == 30);
+    final bool isMilestoneDay = (_currentDay >= 30 && !_alreadyCheckedInToday);
+    final bool canClaim = !_isLoading && !_alreadyCheckedInToday;
 
-    return Container(
-      width: 260,
-      height: 60,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: (isMilestoneDay ? Colors.orange : AppColors.primary)
-                .withValues(alpha: 0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: (_isLoading || _alreadyCheckedInToday)
-            ? null
-            : _handleCheckIn,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _alreadyCheckedInToday
-              ? Colors.grey.shade400
-              : isMilestoneDay
-              ? Colors.orange
-              : AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          elevation: 0,
-        ),
-        child: _isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
-            : Text(
-                _alreadyCheckedInToday
-                    ? 'ALREADY CHECKED IN'
-                    : isMilestoneDay
-                    ? 'CLAIM 30-DAY REWARD'
-                    : 'CHECK-IN DAY ${_currentDay > 30 ? 30 : _currentDay}',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
+    return Column(
+      children: [
+        // 30-day streak info message
+        if (_alreadyCheckedInToday)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.12),
               ),
-      ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.info_outline, size: 18, color: AppColors.primary.withValues(alpha: 0.6)),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    'Continuous 30 days only get a gift',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        Container(
+          width: 260,
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: canClaim
+                ? [
+                    BoxShadow(
+                      color: (isMilestoneDay ? Colors.orange : AppColors.primary)
+                          .withValues(alpha: 0.4),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [],
+          ),
+          child: ElevatedButton(
+            onPressed: canClaim ? _handleCheckIn : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _alreadyCheckedInToday
+                  ? Colors.grey.shade300
+                  : isMilestoneDay
+                  ? Colors.orange
+                  : AppColors.primary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.grey.shade500,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              elevation: 0,
+            ),
+            child: _isLoading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : Text(
+                    _alreadyCheckedInToday
+                        ? 'CLAIM OFFER'
+                        : isMilestoneDay
+                        ? 'CLAIM 30-DAY REWARD'
+                        : 'CHECK-IN DAY ${_currentDay > 30 ? 30 : _currentDay}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 

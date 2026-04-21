@@ -245,7 +245,39 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                     // ── Hero Reward Card ───────────────────────────────
                     _buildHeroCard(offer, isCompleted),
 
-                    const SizedBox(height: 36),
+                    // ── Mission Briefing (Description) ──────────────────
+                    if (offer['description'] != null && 
+                        (offer['description'] as String).isNotEmpty &&
+                        !_isParsedAsSteps(offer['description']))
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader(Icons.info_outline, 'Mission Briefing'),
+                          const SizedBox(height: 16),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              offer['description'],
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.6,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 36),
+                        ],
+                      ),
 
                     // ── Steps to Earn ──────────────────────────────────
                     _buildStepsSection(steps),
@@ -550,20 +582,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.list_alt, color: AppColors.primary, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Steps to Earn',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurface,
-              ),
-            ),
-          ],
-        ),
+        _buildSectionHeader(Icons.list_alt, 'Steps to Earn'),
         const SizedBox(height: 20),
         ...resolvedSteps.asMap().entries.map((entry) {
           final isLast = entry.key == resolvedSteps.length - 1;
@@ -640,11 +659,44 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     ];
   }
 
+  bool _isParsedAsSteps(String description) {
+    if (description.isEmpty) return false;
+    if (!description.contains('\n')) return false;
+    final lines = description.split('\n');
+    int stepCount = 0;
+    for (var line in lines) {
+       final clean = line.trim();
+       if (clean.isEmpty) continue;
+       final stepPattern = RegExp(r'^(\d+[\.\)]|Step\s+\d+:?|[-•*])\s*(.*)', caseSensitive: false);
+       if (stepPattern.hasMatch(clean)) stepCount++;
+    }
+    return stepCount >= 2;
+  }
+
+
   String _normalizeStepText(dynamic value) {
     final text = value?.toString().trim() ?? '';
     if (text.isEmpty) return '';
     return text.replaceAll(RegExp(r'\s+'), ' ');
   }
+
+  Widget _buildSectionHeader(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.primary, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+
 
   Widget _buildStep({
     required int number,
@@ -737,16 +789,30 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                       ),
                     ),
                     if (description.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        description,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
-                          height: 1.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      const SizedBox(height: 8),
+                      ...description.split('\n').where((s) => s.trim().isNotEmpty).map((bullet) {
+                        final cleanBullet = bullet.startsWith('• ') ? bullet.substring(2) : bullet;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('• ', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w900)),
+                              Expanded(
+                                child: Text(
+                                  cleanBullet,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
+                                    height: 1.4,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                     ],
                   ],
                 ),
