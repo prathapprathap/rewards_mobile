@@ -69,7 +69,7 @@ class _PewardBottomNav extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -146,7 +146,7 @@ class _PewardBottomNav extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 6),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.35),
+                  color: AppColors.primary.withValues(alpha: 0.35),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),

@@ -357,26 +357,56 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.tertiaryFixed.withValues(
-                                alpha: 0.5,
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tertiaryFixed.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                                child: Text(
+                                  isCompleted ? 'COMPLETED' : 'UNLOCKED OFFER',
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.tertiary,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                            child: Text(
-                              isCompleted ? 'COMPLETED' : 'UNLOCKED OFFER',
-                              style: GoogleFonts.inter(
-                                color: AppColors.tertiary,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
+                              if (offer['side_label'] != null &&
+                                  offer['side_label'].toString().isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secondary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(99),
+                                    border: Border.all(
+                                      color: AppColors.secondary.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    offer['side_label'].toString().toUpperCase(),
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.secondary,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 14),
                           Text(

@@ -133,7 +133,7 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -165,7 +165,7 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(35),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -204,7 +204,7 @@ class _WalletScreenState extends State<WalletScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurfaceVariant.withOpacity(0.5),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 32),
@@ -249,7 +249,7 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
         ],
       ),
       child: Row(
@@ -290,7 +290,7 @@ class _WalletScreenState extends State<WalletScreen> {
               fontWeight: FontWeight.w800,
               color: active
                   ? Colors.white
-                  : AppColors.onSurfaceVariant.withOpacity(0.5),
+                  : AppColors.onSurfaceVariant.withValues(alpha: 0.5),
               letterSpacing: 0.5,
             ),
           ),
@@ -308,7 +308,7 @@ class _WalletScreenState extends State<WalletScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            color: AppColors.onSurfaceVariant.withOpacity(0.5),
+            color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
             letterSpacing: 0.5,
           ),
         ),
@@ -358,7 +358,7 @@ class _WalletScreenState extends State<WalletScreen> {
             _isEarningsTab ? 'No Earnings Yet!' : 'No Redeem History !',
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w600,
-              color: AppColors.onSurfaceVariant.withOpacity(0.5),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -409,7 +409,7 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -459,7 +459,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
                     ),
                     if (type == 'withdrawal') ...[
@@ -502,7 +502,7 @@ class _WalletScreenState extends State<WalletScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

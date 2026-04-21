@@ -76,7 +76,7 @@ class MyApp extends StatelessWidget {
               textTheme: textTheme,
               scaffoldBackgroundColor: AppColors.background,
               navigationBarTheme: NavigationBarThemeData(
-                backgroundColor: Colors.white.withOpacity(0.92),
+                backgroundColor: Colors.white.withValues(alpha: 0.92),
                 indicatorColor: AppColors.primary,
                 iconTheme: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {

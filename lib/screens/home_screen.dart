@@ -245,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   blurRadius: 10,
                 ),
               ],
@@ -283,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -335,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: banner['color2'].withOpacity(0.3),
+              color: banner['color2'].withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -360,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(
                 banner['icon'],
                 size: 140,
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
             Container(
@@ -368,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(28),
                 gradient: banner['image_url'] != null 
                   ? LinearGradient(
-                      colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                      colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                     )
@@ -397,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -461,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: active ? 16 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(active ? 1.0 : 0.4),
+        color: Colors.white.withValues(alpha: active ? 1.0 : 0.4),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -473,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
       style: GoogleFonts.plusJakartaSans(
         fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: AppColors.onSurfaceVariant.withOpacity(0.6),
+        color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
         letterSpacing: 0.5,
       ),
     );
@@ -513,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -548,13 +548,45 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        task['offer_name'] ?? 'Task',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: AppColors.primary,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              task['offer_name'] ?? 'Task',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: AppColors.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (task['side_label'] != null &&
+                              task['side_label'].toString().isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.secondary.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                task['side_label'].toString().toUpperCase(),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10,
+                                  color: AppColors.secondary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       _buildRewardPill('+${task['amount'] ?? 0}'),

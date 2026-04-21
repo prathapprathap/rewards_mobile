@@ -92,7 +92,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                   borderRadius: BorderRadius.circular(50),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -125,7 +125,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                   borderRadius: BorderRadius.circular(40),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -149,7 +149,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -161,10 +161,10 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                         hintText: 'Enter Code Here',
                         hintStyle: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.onSurfaceVariant.withOpacity(0.3),
+                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
                         ),
                         filled: true,
-                        fillColor: AppColors.background.withOpacity(0.5),
+                        fillColor: AppColors.background.withValues(alpha: 0.5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(20),
                           borderSide: BorderSide.none,
@@ -211,7 +211,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.1),
+                            color: Colors.amber.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.stars_rounded, color: Colors.amber, size: 20),
@@ -223,7 +223,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                               height: 1.4,
                             ),
                           ),

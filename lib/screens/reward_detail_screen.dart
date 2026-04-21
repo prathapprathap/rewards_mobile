@@ -161,13 +161,13 @@ class RewardDetailScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.success.withOpacity(0.15),
-            const Color(0xFF1B5E20).withOpacity(0.3),
+            AppColors.success.withValues(alpha: 0.15),
+            const Color(0xFF1B5E20).withValues(alpha: 0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.success.withOpacity(0.3),
+          color: AppColors.success.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -179,14 +179,14 @@ class RewardDetailScreen extends StatelessWidget {
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.success.withOpacity(0.2),
+              color: AppColors.success.withValues(alpha: 0.2),
               border: Border.all(
                 color: AppColors.success,
                 width: 3,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.success.withOpacity(0.3),
+                  color: AppColors.success.withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 5,
                 ),
@@ -212,10 +212,10 @@ class RewardDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.2),
+              color: AppColors.success.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.success.withOpacity(0.4),
+                color: AppColors.success.withValues(alpha: 0.4),
               ),
             ),
             child: Row(
@@ -238,7 +238,7 @@ class RewardDetailScreen extends StatelessWidget {
           Text(
             'Credited to your wallet',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 14,
             ),
           ),
@@ -343,7 +343,7 @@ class RewardDetailScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.15),
+                      color: AppColors.success.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -396,8 +396,8 @@ class RewardDetailScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withOpacity(0),
-              Colors.black.withOpacity(0.8),
+              Colors.black.withValues(alpha: 0),
+              Colors.black.withValues(alpha: 0.8),
               Colors.black,
             ],
           ),
@@ -406,10 +406,10 @@ class RewardDetailScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.15),
+            color: AppColors.success.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: AppColors.success.withOpacity(0.4),
+              color: AppColors.success.withValues(alpha: 0.4),
               width: 2,
             ),
           ),
@@ -443,8 +443,8 @@ class RewardDetailScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withOpacity(0),
-              Colors.black.withOpacity(0.8),
+              Colors.black.withValues(alpha: 0),
+              Colors.black.withValues(alpha: 0.8),
               Colors.black,
             ],
           ),

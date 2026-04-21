@@ -57,7 +57,7 @@ class ExtraScreen extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   blurRadius: 10,
                 ),
               ],
@@ -95,7 +95,7 @@ class ExtraScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -127,7 +127,7 @@ class ExtraScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -149,7 +149,7 @@ class ExtraScreen extends StatelessWidget {
           Text(
             'DISCOVER EXCLUSIVE BONUSES',
             style: GoogleFonts.plusJakartaSans(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
@@ -222,7 +222,7 @@ class ExtraScreen extends StatelessWidget {
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -233,7 +233,7 @@ class ExtraScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: iconColor, size: 28),
@@ -256,7 +256,7 @@ class ExtraScreen extends StatelessWidget {
                     subtitle,
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -265,7 +265,7 @@ class ExtraScreen extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.onSurfaceVariant.withOpacity(0.3),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
             ),
           ],
         ),

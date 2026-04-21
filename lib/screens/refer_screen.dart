@@ -198,7 +198,7 @@ class _ReferScreenState extends State<ReferScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -228,7 +228,7 @@ class _ReferScreenState extends State<ReferScreen> {
         style: GoogleFonts.plusJakartaSans(
           fontSize: 10,
           fontWeight: FontWeight.w900,
-          color: AppColors.onSurfaceVariant.withOpacity(0.5),
+          color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
           letterSpacing: 1.2,
         ),
       ),
@@ -243,7 +243,7 @@ class _ReferScreenState extends State<ReferScreen> {
         borderRadius: BorderRadius.circular(35),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -260,7 +260,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withOpacity(0.4),
+                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -316,7 +316,7 @@ class _ReferScreenState extends State<ReferScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: Colors.orange.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -335,7 +335,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -345,7 +345,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -370,7 +370,7 @@ class _ReferScreenState extends State<ReferScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -389,7 +389,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -418,7 +418,7 @@ class _ReferScreenState extends State<ReferScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -430,7 +430,7 @@ class _ReferScreenState extends State<ReferScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: AppColors.primary, size: 20),
@@ -441,7 +441,7 @@ class _ReferScreenState extends State<ReferScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
               fontWeight: FontWeight.w900,
-              color: AppColors.onSurfaceVariant.withOpacity(0.4),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
               letterSpacing: 1,
             ),
           ),
@@ -467,7 +467,7 @@ class _ReferScreenState extends State<ReferScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w900,
-            color: AppColors.onSurfaceVariant.withOpacity(0.6),
+            color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
             letterSpacing: 0.5,
           ),
         ),
@@ -493,7 +493,7 @@ class _ReferScreenState extends State<ReferScreen> {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -504,7 +504,7 @@ class _ReferScreenState extends State<ReferScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(icon, color: AppColors.primary, size: 24),
@@ -539,7 +539,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                     height: 1.4,
                   ),
                 ),
@@ -600,7 +600,7 @@ class _ReferScreenState extends State<ReferScreen> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 elevation: 10,
-                shadowColor: AppColors.primary.withOpacity(0.4),
+                shadowColor: AppColors.primary.withValues(alpha: 0.4),
               ),
             ),
           ),

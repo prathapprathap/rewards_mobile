@@ -20,7 +20,7 @@ class SettingsScreen extends StatelessWidget {
           // ── Glass App Bar ──────────────────────────────────────────────
           SliverAppBar(
             pinned: true,
-            backgroundColor: Colors.white.withOpacity(0.85),
+            backgroundColor: Colors.white.withValues(alpha: 0.85),
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             titleSpacing: 0,
@@ -91,7 +91,7 @@ class SettingsScreen extends StatelessWidget {
                           context,
                           icon: Icons.person_outline,
                           iconColor: AppColors.primary,
-                          iconBg: AppColors.primaryFixed.withOpacity(0.4),
+                          iconBg: AppColors.primaryFixed.withValues(alpha: 0.4),
                           title: 'Profile Details',
                           subtitle: 'Edit your public presence and info',
                           onTap: () {},
@@ -101,7 +101,7 @@ class SettingsScreen extends StatelessWidget {
                           context,
                           icon: Icons.account_balance_wallet_outlined,
                           iconColor: AppColors.secondary,
-                          iconBg: AppColors.secondaryFixed.withOpacity(0.5),
+                          iconBg: AppColors.secondaryFixed.withValues(alpha: 0.5),
                           title: 'Payout Methods',
                           subtitle: 'Connected banks and digital wallets',
                           onTap: () {},

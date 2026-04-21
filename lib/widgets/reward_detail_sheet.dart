@@ -57,7 +57,7 @@ class RewardDetailSheet extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade700.withOpacity(0.8),
+                            color: Colors.green.shade700.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text(

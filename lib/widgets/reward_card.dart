@@ -27,14 +27,14 @@ class RewardCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isCompleted
-                  ? AppColors.success.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.2),
+                  ? AppColors.success.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.2),
               blurRadius: isCompleted ? 16 : 10,
               offset: const Offset(0, 4),
             ),
           ],
           border: isCompleted
-              ? Border.all(color: AppColors.success.withOpacity(0.5), width: 2)
+              ? Border.all(color: AppColors.success.withValues(alpha: 0.5), width: 2)
               : null,
         ),
         clipBehavior: Clip.antiAlias,
@@ -93,7 +93,7 @@ class RewardCard extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.success.withOpacity(0.5),
+                                  color: AppColors.success.withValues(alpha: 0.5),
                                   blurRadius: 8,
                                 ),
                               ],
@@ -192,7 +192,7 @@ class RewardCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        AppColors.success.withOpacity(0.05),
+                        AppColors.success.withValues(alpha: 0.05),
                       ],
                     ),
                   ),

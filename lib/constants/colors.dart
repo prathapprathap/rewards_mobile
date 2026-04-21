@@ -72,8 +72,8 @@ class AppColors {
   static const Color textTertiary = outline;
   static const Color border = outlineVariant;
   static Color get divider => surfaceContainerLow;
-  static Color shadowLight = Colors.black.withOpacity(0.04);
-  static Color shadowMedium = Colors.black.withOpacity(0.08);
+  static Color shadowLight = Colors.black.withValues(alpha: 0.04);
+  static Color shadowMedium = Colors.black.withValues(alpha: 0.08);
   static Color get cardColor => surfaceContainerLowest;
 
   // ─── Gradients ───────────────────────────────────────────────────────────
