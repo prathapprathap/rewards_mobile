@@ -25,6 +25,7 @@ class Reward {
   final int totalSteps;
   final double earnedAmount;
   final List<Map<String, dynamic>> completedEvents;
+  final String? sideLabel;
 
   Reward({
     required this.id,
@@ -44,6 +45,7 @@ class Reward {
     this.totalSteps = 0,
     this.earnedAmount = 0.0,
     this.completedEvents = const [],
+    this.sideLabel,
   });
 
   // Helper for status text

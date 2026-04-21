@@ -364,48 +364,25 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                                   horizontal: 12,
                                   vertical: 5,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.tertiaryFixed.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                  borderRadius: BorderRadius.circular(99),
-                                ),
-                                child: Text(
-                                  isCompleted ? 'COMPLETED' : 'UNLOCKED OFFER',
-                                  style: GoogleFonts.inter(
-                                    color: AppColors.tertiary,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ),
-                              if (offer['side_label'] != null &&
-                                  offer['side_label'].toString().isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 5,
-                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.secondary.withValues(alpha: 0.1),
+                                    color: Colors.cyan.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(99),
                                     border: Border.all(
-                                      color: AppColors.secondary.withValues(alpha: 0.3),
+                                      color: Colors.cyan.withValues(alpha: 0.3),
+                                      width: 1,
                                     ),
                                   ),
                                   child: Text(
-                                    offer['side_label'].toString().toUpperCase(),
+                                    isCompleted ? 'COMPLETED' : 'UNLOCKED OFFER',
                                     style: GoogleFonts.inter(
-                                      color: AppColors.secondary,
+                                      color: Colors.cyan.shade700,
                                       fontSize: 9,
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 1.2,
                                     ),
                                   ),
                                 ),
-                              ],
+                              // Removed side label from detail page as per user request
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -498,7 +475,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                     Expanded(
                       child: _buildMetaChip(
                         icon: Icons.verified,
-                        color: AppColors.tertiary,
+                        color: const Color(0xFF27AE60), // Updated tick color
                         label: 'Reliability',
                         value: 'Guaranteed',
                       ),
@@ -618,7 +595,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
       final eventSteps = rawEvents.map((event) {
         if (event is Map) {
           final name = _normalizeStepText(event['event_name']);
-          final desc = event['description']?.toString() ?? '';
+          final desc = _normalizeStepText(event['description'] ?? event['event_description'] ?? '');
           return desc.isNotEmpty ? "$name|$desc" : name;
         }
         return '';

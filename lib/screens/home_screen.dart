@@ -12,6 +12,7 @@ import 'offerwall_screen.dart';
 import 'refer_screen.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/wallet_symbol_icon.dart';
+import '../widgets/ribbon_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -531,8 +532,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child:
-                        (task['image_url'] != null &&
+                    child: (task['image_url'] != null &&
                             task['image_url'].toString().isNotEmpty)
                         ? Image.network(
                             task['image_url'],
@@ -548,45 +548,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              task['offer_name'] ?? 'Task',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                                color: AppColors.primary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (task['side_label'] != null &&
-                              task['side_label'].toString().isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.only(left: 8),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.secondary.withValues(alpha: 0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                task['side_label'].toString().toUpperCase(),
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 10,
-                                  color: AppColors.secondary,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                        ],
+                      Text(
+                        task['offer_name'] ?? 'Task',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: AppColors.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       _buildRewardPill('+${task['amount'] ?? 0}'),
@@ -608,6 +578,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          if (task['side_label'] != null && task['side_label'].toString().isNotEmpty)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: RibbonBadge(label: task['side_label'].toString()),
+            ),
         ],
       ),
     );

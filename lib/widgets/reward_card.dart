@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/reward_model.dart';
 import '../constants/colors.dart';
+import 'ribbon_badge.dart';
 
 class RewardCard extends StatelessWidget {
   final Reward reward;
@@ -22,7 +23,7 @@ class RewardCard extends StatelessWidget {
         tag: 'reward_card_${reward.id}',
         child: Container(
           decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E), // Dark theme match
+          color: AppColors.onSurface, // Using dynamic onSurface for dark card base
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -101,6 +102,12 @@ class RewardCard extends StatelessWidget {
                             child: const Icon(Icons.check, size: 16, color: Colors.white),
                           ),
                         ),
+                      if (reward.sideLabel != null && reward.sideLabel!.isNotEmpty)
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: RibbonBadge(label: reward.sideLabel!),
+                        ),
                     ],
                   ),
                 ),
@@ -110,7 +117,9 @@ class RewardCard extends StatelessWidget {
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    color: isCompleted ? const Color(0xFF1A2E1A) : Colors.black,
+                    color: isCompleted 
+                      ? AppColors.secondary.withValues(alpha: 0.15) 
+                      : Colors.black.withValues(alpha: 0.4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
