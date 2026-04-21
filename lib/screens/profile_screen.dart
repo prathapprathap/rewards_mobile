@@ -315,10 +315,17 @@ class ProfileScreen extends StatelessWidget {
                     );
                   }
                 }
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Telegram link not configured')),
+                  );
+                }
               }
             },
           ),
           const SizedBox(height: 16),
+
           _buildSettingsItem(
             icon: Icons.help_outline_rounded,
             iconColor: Colors.red,

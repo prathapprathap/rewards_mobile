@@ -219,7 +219,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'CODES ARE SHARED ON OUR TELEGRAM CHANNEL AND OFFICIAL SOCIAL MEDIA HANDLES. KEEP AN EYE OUT!',
+                            'CODES ARE SHARED ON OUR OFFICIAL SOCIAL MEDIA HANDLES. KEEP AN EYE OUT!',
                             style: GoogleFonts.inter(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,

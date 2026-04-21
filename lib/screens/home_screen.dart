@@ -48,16 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'color2': const Color(0xFF0083B0),
       'icon': Icons.card_giftcard,
     },
-    {
-      'title': 'TELEGRAM',
-      'subtitle': 'JOIN OUR\nCHANNEL',
-      'action': 'GET PROMO CODES! ✦',
-      'type': 'telegram',
-      'image_url': null,
-      'color1': const Color(0xFF0088CC),
-      'color2': const Color(0xFF24A1DE),
-      'icon': Icons.telegram,
-    },
+
   ];
 
   List<dynamic> _banners = [];
@@ -113,10 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
               icon = Icons.card_giftcard;
               c1 = const Color(0xFF00C9FF);
               c2 = const Color(0xFF92FE9D);
-            } else if (type == 'telegram') {
-              icon = Icons.telegram;
-              c1 = const Color(0xFF0088CC);
-              c2 = const Color(0xFF24A1DE);
             }
 
             return {
@@ -464,14 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (await canLaunchUrl(uri)) await launchUrl(uri);
         }
         break;
-      case 'telegram':
-        final settings = Provider.of<SettingsProvider>(context, listen: false);
-        final url = value ?? settings.getString('telegram_link', '');
-        if (url.isNotEmpty) {
-          final uri = Uri.parse(url);
-          if (await canLaunchUrl(uri)) await launchUrl(uri);
-        }
-        break;
+
     }
   }
 

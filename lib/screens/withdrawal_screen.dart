@@ -5,6 +5,7 @@ import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_toast.dart';
+import '../providers/settings_provider.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -123,7 +124,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                 letterSpacing: 0.5,
               ),
             ),
@@ -157,6 +158,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
   Widget _buildBalanceCard() {
     final user = Provider.of<UserProvider>(context).user;
+    final settings = Provider.of<SettingsProvider>(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -165,7 +167,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -240,7 +242,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w800,
-            color: AppColors.onSurfaceVariant.withOpacity(0.6),
+            color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 8),
@@ -251,7 +253,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.inter(
-              color: AppColors.onSurfaceVariant.withOpacity(0.3),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
               fontSize: 14,
             ),
             filled: true,

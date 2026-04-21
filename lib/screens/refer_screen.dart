@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../constants/colors.dart';
 import '../providers/settings_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_toast.dart';
 import '../widgets/wallet_symbol_icon.dart';
@@ -58,7 +59,7 @@ class _ReferScreenState extends State<ReferScreen> {
   @override
   Widget build(BuildContext context) {
     // Listen to SettingsProvider for dynamic color updates
-    Provider.of<SettingsProvider>(context);
+    final settings = Provider.of<SettingsProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
     final referralCode =

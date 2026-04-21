@@ -5,6 +5,7 @@ import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'offer_detail_screen.dart';
+import '../providers/settings_provider.dart';
 
 class ScratchCardScreen extends StatefulWidget {
   const ScratchCardScreen({super.key});
@@ -189,6 +190,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -261,6 +263,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
   /// COMPLETED VIEW - shown when the offer was already completed
   /// ─────────────────────────────────────────────────────────────
   Widget _buildCompletedView() {
+    final settings = Provider.of<SettingsProvider>(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -271,7 +274,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
             decoration: BoxDecoration(
               color: AppColors.successLight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.success.withOpacity(0.3)),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -311,13 +314,13 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.success.withOpacity(0.3),
+                    color: AppColors.success.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
                 ],
                 border: Border.all(
-                  color: AppColors.success.withOpacity(0.4),
+                  color: AppColors.success.withValues(alpha: 0.4),
                   width: 2,
                 ),
               ),
@@ -336,7 +339,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                           fit: BoxFit.cover,
                         ),
                         border: Border.all(
-                          color: AppColors.success.withOpacity(0.3),
+                          color: AppColors.success.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -380,7 +383,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.success.withOpacity(0.4),
+                          color: AppColors.success.withValues(alpha: 0.4),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -575,7 +578,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 4,
-                shadowColor: AppColors.success.withOpacity(0.4),
+                shadowColor: AppColors.success.withValues(alpha: 0.4),
               ),
             ),
           ),
@@ -657,7 +660,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withOpacity(0.3),
+                    color: AppColors.accent.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -734,6 +737,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
   }
 
   Widget _buildRewardCard() {
+    final settings = Provider.of<SettingsProvider>(context);
     return Container(
       width: MediaQuery.of(context).size.width - 40,
       padding: const EdgeInsets.all(32),
@@ -846,7 +850,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 8,
-                shadowColor: AppColors.success.withOpacity(0.5),
+                shadowColor: AppColors.success.withValues(alpha: 0.5),
               ),
             ),
         ],

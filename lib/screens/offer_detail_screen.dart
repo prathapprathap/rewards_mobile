@@ -87,8 +87,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         
         if (mounted) {
           _showSnack(
-            'Opening Play Store... Complete the task to earn ₹${_offerDetails!['amount']}',
-            AppColors.success,
+            'Redirecting to Play Store... Complete all steps to earn ₹${_offerDetails!['amount']}',
+            AppColors.primary,
           );
           // Delay before popping back
           Future.delayed(
@@ -151,8 +151,8 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
 
           if (result == true && mounted) {
             _showSnack(
-              'Offer tracked! Complete the task to earn ₹${_offerDetails!['amount']}',
-              AppColors.success,
+              'Follow the instructions carefully to earn ₹${_offerDetails!['amount']}',
+              AppColors.primary,
             );
             Future.delayed(
               const Duration(seconds: 2),
@@ -315,6 +315,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
   // ─── Hero Reward Card ─────────────────────────────────────────────────────
 
   Widget _buildHeroCard(Map<String, dynamic> offer, bool isCompleted) {
+    final settings = Provider.of<SettingsProvider>(context);
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
@@ -585,12 +586,16 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     final rawEvents = offer['events'] as List<dynamic>?;
     if (rawEvents != null && rawEvents.isNotEmpty) {
       final eventSteps = rawEvents.map((event) {
-        if (event is Map) return _normalizeStepText(event['event_name']);
+        if (event is Map) {
+          final name = _normalizeStepText(event['event_name']);
+          final desc = event['description']?.toString() ?? '';
+          return desc.isNotEmpty ? "$name|$desc" : name;
+        }
         return '';
       }).where((s) => s.isNotEmpty).toList();
       
       if (eventSteps.isNotEmpty) {
-         return ["Click 'Start Offer' to open the partner page.", ...eventSteps, "Reward will be credited after verification."];
+         return ["Start Mission|Click 'Start Offer' to open the partner page.", ...eventSteps, "Verification|Reward will be credited after successful verification."];
       }
     }
 
@@ -640,56 +645,109 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     required bool isFirst,
     required bool isLast,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isFirst ? AppColors.primary : AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
+    // Split combined text/description if present
+    final parts = text.split('|');
+    final title = parts[0].trim();
+    final description = parts.length > 1 ? parts[1].trim() : '';
+
+    return Stack(
+      children: [
+        if (!isLast)
+          Positioned(
+            left: 28, // Center of the number circle (12 + 16)
+            top: 40,
+            bottom: 0,
+            child: Container(
+              width: 2,
+              color: AppColors.primary.withValues(alpha: 0.1),
             ),
-            child: Center(
-              child: Text(
-                '$number',
-                style: GoogleFonts.inter(
-                  color: isFirst ? Colors.white : AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+          ),
+        Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isFirst ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.05),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.03),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: isFirst 
+                      ? LinearGradient(
+                          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: isFirst ? null : AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  boxShadow: isFirst ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ] : null,
+                ),
+                child: Center(
+                  child: Text(
+                    '$number',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: isFirst ? Colors.white : AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: AppColors.onSurface,
-                height: 1.5,
-                fontWeight: FontWeight.w500,
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.onSurface,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        description,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
+                          height: 1.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

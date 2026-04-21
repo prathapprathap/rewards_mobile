@@ -108,16 +108,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> claimTelegramReward(int userId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/claim-telegram-reward'),
-      );
-      return jsonDecode(response.body);
-    } catch (e) {
-      throw Exception('Error claiming reward: $e');
-    }
-  }
+
 
   Future<Map<String, dynamic>> getUserSpins(int userId) async {
     try {

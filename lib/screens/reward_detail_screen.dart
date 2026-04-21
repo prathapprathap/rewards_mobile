@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/reward_model.dart';
+import '../providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 
 class RewardDetailScreen extends StatelessWidget {
@@ -12,6 +14,7 @@ class RewardDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
     final bool isCompleted = reward.isCompleted && reward.isScratched;
 
     return Scaffold(
@@ -68,7 +71,7 @@ class RewardDetailScreen extends StatelessWidget {
 
                 // Completed events breakdown (for multi-step offers)
                 if (isCompleted && reward.completedEvents.isNotEmpty) ...[
-                  _buildCompletedEventsCard(),
+                  _buildCompletedEventsCard(settings),
                   const SizedBox(height: 20),
                 ],
 
@@ -274,7 +277,7 @@ class RewardDetailScreen extends StatelessWidget {
   }
 
   /// Card showing completed events breakdown for multi-step offers
-  Widget _buildCompletedEventsCard() {
+  Widget _buildCompletedEventsCard(SettingsProvider settings) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
