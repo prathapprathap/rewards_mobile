@@ -13,18 +13,23 @@ class ApiService {
     String? name,
     String? profilePic,
     String? deviceId,
+    String? referralCode,
   }) async {
     try {
+      final body = {
+        'google_id': googleId,
+        'email': email,
+        'name': name,
+        'profile_pic': profilePic,
+        'device_id': deviceId,
+      };
+      if (referralCode != null && referralCode.isNotEmpty) {
+        body['referral_code'] = referralCode;
+      }
       final response = await http.post(
         Uri.parse(ApiConstants.loginEndpoint),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'google_id': googleId,
-          'email': email,
-          'name': name,
-          'profile_pic': profilePic,
-          'device_id': deviceId,
-        }),
+        body: jsonEncode(body),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -100,6 +105,17 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching tasks: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> claimTelegramReward(int userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId/claim-telegram-reward'),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception('Error claiming reward: $e');
     }
   }
 

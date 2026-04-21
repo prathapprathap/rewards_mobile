@@ -146,7 +146,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildName(dynamic user) {
     return Text(
-      user?.name ?? 'Prathap',
+      user?.name ?? 'User',
       style: GoogleFonts.plusJakartaSans(
         fontSize: 28,
         fontWeight: FontWeight.w900,
@@ -159,12 +159,11 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildContactInfo(dynamic user) {
     return Column(
       children: [
-        _buildInfoPill(
-          Icons.email_outlined,
-          user?.email ?? 'prathapshanmugam5@gmail.com',
-        ),
-        const SizedBox(height: 12),
-        _buildInfoPill(Icons.phone_outlined, '9345749329'),
+        if (user?.email != null && user.email.isNotEmpty)
+          _buildInfoPill(
+            Icons.email_outlined,
+            user.email,
+          ),
       ],
     );
   }

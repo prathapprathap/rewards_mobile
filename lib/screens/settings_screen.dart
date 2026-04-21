@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../constants/colors.dart';
+import '../providers/settings_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
+    final siteName = settings.getString('site_name', 'Rewards');
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -24,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Pewards',
+                    siteName,
                     style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
@@ -167,7 +172,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   Center(
                     child: Text(
-                      'Pewards v2.4.1 · PLATINUM TIER',
+                      '$siteName v2.4.1 · PLATINUM TIER',
                       style: GoogleFonts.inter(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,

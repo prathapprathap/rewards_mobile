@@ -406,7 +406,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '₹${_earnedAmount.toStringAsFixed(2)}',
+                          '${settings.currencySymbol}${_earnedAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 44,
@@ -538,7 +538,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                         ),
                       ),
                       Text(
-                        '₹${_earnedAmount.toStringAsFixed(2)}',
+                        '${settings.currencySymbol}${_earnedAmount.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -812,7 +812,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹${_offer!['amount']}',
+                  '${settings.currencySymbol}${_offer!['amount']}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 48,

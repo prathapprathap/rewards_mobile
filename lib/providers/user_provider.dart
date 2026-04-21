@@ -35,7 +35,7 @@ class UserProvider with ChangeNotifier {
     return null;
   }
 
-  Future<void> login(String googleId, String email, String? name, String? photoUrl) async {
+  Future<void> login(String googleId, String email, String? name, String? photoUrl, {String? referralCode}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -47,6 +47,7 @@ class UserProvider with ChangeNotifier {
         name: name,
         profilePic: photoUrl,
         deviceId: deviceId,
+        referralCode: referralCode,
       );
       
       // Save user ID to shared prefs for auto-login

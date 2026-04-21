@@ -306,6 +306,8 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
     }
   }
 
+  // _showReferralCodeDialog removed as per user request for auto-detection only
+
   Future<void> _handleSignIn() async {
     if (!_initialized) {
       _showError('Google Sign In is not ready yet');

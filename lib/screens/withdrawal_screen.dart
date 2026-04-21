@@ -183,7 +183,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '₹${(user?.walletBalance ?? 0).toStringAsFixed(2)}',
+            '${settings.currencySymbol}${(user?.walletBalance ?? 0).toStringAsFixed(2)}',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 32,
               fontWeight: FontWeight.w900,

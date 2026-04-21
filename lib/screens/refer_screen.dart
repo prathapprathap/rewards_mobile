@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+
 import '../constants/colors.dart';
-import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/wallet_symbol_icon.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/wallet_symbol_icon.dart';
 
 class ReferScreen extends StatefulWidget {
   const ReferScreen({super.key});
@@ -36,6 +37,7 @@ class _ReferScreenState extends State<ReferScreen> {
   }
 
   Future<void> _fetchStats() async {
+    final settings = Provider.of<SettingsProvider>(context); // ✅ FIXED
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userId = userProvider.user?.id;
     if (userId == null) return;
@@ -104,7 +106,7 @@ class _ReferScreenState extends State<ReferScreen> {
                       Expanded(
                         child: _buildStatCard(
                           'EARNINGS',
-                          '₹${_stats['total_commission']}',
+                          '${settings.currencySymbol}${_stats['total_commission']}',
                           Icons.account_balance_wallet_rounded,
                         ),
                       ),
@@ -555,23 +557,20 @@ class _ReferScreenState extends State<ReferScreen> {
     final apkUrl = settings.getString('apk_download_url', '').trim();
 
     // Build download link with embedded referral code
+    // ALWAYS use the backend download endpoint to ensure IP/UA attribution works
     String downloadLink = '';
-    if (apkUrl.isNotEmpty) {
-      // Direct APK link — append referral code as query param
-      downloadLink = apkUrl.contains('?')
-          ? '$apkUrl&ref=$code'
-          : '$apkUrl?ref=$code';
-    } else if (siteUrl.isNotEmpty) {
-      // Fallback to backend download endpoint
-      final base = siteUrl.endsWith('/') ? siteUrl.substring(0, siteUrl.length - 1) : siteUrl;
+    if (siteUrl.isNotEmpty) {
+      final base = siteUrl.endsWith('/')
+          ? siteUrl.substring(0, siteUrl.length - 1)
+          : siteUrl;
       downloadLink = '$base/api/download/$code';
     }
 
     final shareMessage = downloadLink.isNotEmpty
         ? '🎉 Join $siteName and earn real cash rewards!\n\n'
-            '📲 Download now: $downloadLink\n\n'
-            '🎁 My referral code: $code\n'
-            'Use my code during signup to get bonus rewards!'
+              '📲 Download now: $downloadLink\n\n'
+              '🎁 My referral code: $code\n'
+              'Use my code during signup to get bonus rewards!'
         : '🎉 Join $siteName using my referral code $code and earn unlimited rewards!';
 
     return Padding(
@@ -624,4 +623,3 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 }
-

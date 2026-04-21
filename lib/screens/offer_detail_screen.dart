@@ -427,7 +427,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '₹${offer['amount'] ?? 0}',
+                      '${settings.currencySymbol}${offer['amount'] ?? 0}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 42,
                         fontWeight: FontWeight.w900,
@@ -571,6 +571,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
   }
 
   List<String> _resolveSteps(Map<String, dynamic> offer) {
+    // 1. Check explicit steps list
     final rawSteps = offer['steps'] as List<dynamic>?;
     final normalizedSteps =
         rawSteps
@@ -578,32 +579,46 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
             .where((step) => step.isNotEmpty)
             .toList() ??
         const <String>[];
-    if (normalizedSteps.isNotEmpty) {
-      return normalizedSteps;
+    if (normalizedSteps.isNotEmpty) return normalizedSteps;
+
+    // 2. Check events list
+    final rawEvents = offer['events'] as List<dynamic>?;
+    if (rawEvents != null && rawEvents.isNotEmpty) {
+      final eventSteps = rawEvents.map((event) {
+        if (event is Map) return _normalizeStepText(event['event_name']);
+        return '';
+      }).where((s) => s.isNotEmpty).toList();
+      
+      if (eventSteps.isNotEmpty) {
+         return ["Click 'Start Offer' to open the partner page.", ...eventSteps, "Reward will be credited after verification."];
+      }
     }
 
-    final rawEvents = offer['events'] as List<dynamic>?;
-    final eventSteps =
-        rawEvents
-            ?.map((event) {
-              if (event is Map<String, dynamic>) {
-                return _normalizeStepText(event['event_name']);
-              }
-              if (event is Map) {
-                return _normalizeStepText(event['event_name']);
-              }
-              return '';
-            })
-            .where((step) => step.isNotEmpty)
-            .toList() ??
-        const <String>[];
-
-    if (eventSteps.isNotEmpty) {
-      return [
-        "Click 'Start Offer' to open the partner page.",
-        ...eventSteps,
-        'Receive your cash reward after successful verification.',
-      ];
+    // 3. Parse from Description (NEW)
+    final description = offer['description'] as String? ?? '';
+    if (description.isNotEmpty && description.contains('\n')) {
+      // Split by newlines and filter for lines that look like steps
+      final lines = description.split('\n');
+      final parsedSteps = <String>[];
+      
+      for (var line in lines) {
+        final clean = line.trim();
+        if (clean.isEmpty) continue;
+        
+        // Match patterns like "Step 1:", "1.", "- ", "• "
+        final stepPattern = RegExp(r'^(\d+[\.\)]|Step\s+\d+:?|[-•*])\s*(.*)', caseSensitive: false);
+        final match = stepPattern.firstMatch(clean);
+        
+        if (match != null) {
+          final content = match.group(2)?.trim() ?? '';
+          if (content.isNotEmpty) parsedSteps.add(content);
+        } else if (clean.length > 5 && clean.length < 100) {
+          // If no pattern but looks like a standalone sentence in a list-y description
+          parsedSteps.add(clean);
+        }
+      }
+      
+      if (parsedSteps.isNotEmpty) return parsedSteps;
     }
 
     return const [
@@ -625,57 +640,56 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     required bool isFirst,
     required bool isLast,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isFirst ? AppColors.primary : AppColors.primaryFixed,
-                shape: BoxShape.circle,
-                boxShadow: isFirst
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Center(
-                child: Text(
-                  '$number',
-                  style: GoogleFonts.inter(
-                    color: isFirst ? Colors.white : AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isFirst ? AppColors.primary : AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$number',
+                style: GoogleFonts.inter(
+                  color: isFirst ? Colors.white : AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
               ),
             ),
-            if (!isLast)
-              Container(width: 1.5, height: 44, color: AppColors.primaryFixed),
-          ],
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: isLast ? 0 : 24, top: 4),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Text(
               text,
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: AppColors.onSurfaceVariant,
-                height: 1.6,
+                color: AppColors.onSurface,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

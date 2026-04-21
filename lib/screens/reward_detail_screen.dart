@@ -369,7 +369,7 @@ class RewardDetailScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '₹${reward.earnedAmount.toStringAsFixed(2)}',
+                '${settings.currencySymbol}${reward.earnedAmount.toStringAsFixed(2)}',
                 style: const TextStyle(
                   color: AppColors.success,
                   fontSize: 18,
