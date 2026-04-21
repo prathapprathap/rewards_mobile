@@ -72,6 +72,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
               earnedAmount: earnedAmount,
               completedEvents: completedEvents,
               sideLabel: offer['side_label']?.toString(),
+              sideLabelColor: offer['side_label_color']?.toString(),
               details: [
                 'Offer: ${offer['offer_name']}',
                 'Amount: ₹${offer['amount']}',

@@ -582,7 +582,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               top: 0,
               left: 0,
-              child: RibbonBadge(label: task['side_label'].toString()),
+              child: RibbonBadge(
+              label: task['side_label'].toString(),
+              colorOverride: task['side_label_color']?.toString(),
+            ),
             ),
         ],
       ),

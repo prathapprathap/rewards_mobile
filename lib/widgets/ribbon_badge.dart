@@ -5,22 +5,34 @@ import 'dart:math' as math;
 
 class RibbonBadge extends StatelessWidget {
   final String label;
+  final String? colorOverride;
 
-  const RibbonBadge({super.key, required this.label});
+  const RibbonBadge({super.key, required this.label, this.colorOverride});
 
   @override
   Widget build(BuildContext context) {
-    Color color = AppColors.primary; 
-    final l = label.toLowerCase();
+    Color color = AppColors.primary;
     
-    if (l.contains('hot') || l.contains('limit')) {
-      color = AppColors.secondary; // Actionable contrast
-    } else if (l.contains('new') || l.contains('fresh')) {
-      color = AppColors.primary;   // Brand primary
-    } else if (l.contains('special') || l.contains('pro')) {
-      color = AppColors.tertiaryFixedDim; // Highlight/Reward signal
-    } else if (l.contains('premium') || l.contains('best')) {
-      color = AppColors.tertiary;  // Distinctive accent
+    if (colorOverride != null && colorOverride!.isNotEmpty) {
+      try {
+        String hex = colorOverride!;
+        if (hex.startsWith('#')) hex = hex.substring(1);
+        if (hex.length == 6) hex = 'FF$hex';
+        color = Color(int.parse(hex, radix: 16));
+      } catch (e) {
+        debugPrint('Error parsing RibbonBadge color override: $e');
+      }
+    } else {
+      final l = label.toLowerCase();
+      if (l.contains('hot') || l.contains('limit')) {
+        color = AppColors.secondary; // Actionable contrast
+      } else if (l.contains('new') || l.contains('fresh')) {
+        color = AppColors.primary;   // Brand primary
+      } else if (l.contains('special') || l.contains('pro')) {
+        color = AppColors.tertiaryFixedDim; // Highlight/Reward signal
+      } else if (l.contains('premium') || l.contains('best')) {
+        color = AppColors.tertiary;  // Distinctive accent
+      }
     }
 
     return SizedBox(

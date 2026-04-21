@@ -106,7 +106,10 @@ class RewardCard extends StatelessWidget {
                         Positioned(
                           top: 0,
                           left: 0,
-                          child: RibbonBadge(label: reward.sideLabel!),
+                        child: RibbonBadge(
+                          label: reward.sideLabel!,
+                          colorOverride: reward.sideLabelColor,
+                        ),
                         ),
                     ],
                   ),

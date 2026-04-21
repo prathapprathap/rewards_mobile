@@ -17,6 +17,7 @@ class Offer {
   final String? imageUrl;
   final String status;
   final List<OfferEvent> events;
+  final String? sideLabelColor;
 
   const Offer({
     required this.id,
@@ -34,6 +35,7 @@ class Offer {
     this.imageUrl,
     this.status = 'active',
     this.events = const [],
+    this.sideLabelColor,
   });
 
   /// Generates the tracking URL by injecting [userId] and [deviceId] into
@@ -83,6 +85,7 @@ class Offer {
       events: rawEvents
           .map((e) => OfferEvent.fromJson(e as Map<String, dynamic>))
           .toList(),
+      sideLabelColor: json['side_label_color']?.toString(),
     );
   }
 
@@ -102,6 +105,7 @@ class Offer {
     'image_url': imageUrl,
     'status': status,
     'events': events.map((e) => e.toJson()).toList(),
+    'side_label_color': sideLabelColor,
   };
 
   bool get isActive => status.toLowerCase() == 'active';
