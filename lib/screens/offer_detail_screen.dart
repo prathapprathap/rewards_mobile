@@ -245,39 +245,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                     // ── Hero Reward Card ───────────────────────────────
                     _buildHeroCard(offer, isCompleted),
 
-                    // ── Mission Briefing (Description) ──────────────────
-                    if (offer['description'] != null && 
-                        (offer['description'] as String).isNotEmpty &&
-                        !_isParsedAsSteps(offer['description']))
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSectionHeader(Icons.info_outline, 'Mission Briefing'),
-                          const SizedBox(height: 16),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              offer['description'],
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: AppColors.onSurfaceVariant,
-                                height: 1.6,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 36),
-                        ],
-                      ),
+                    const SizedBox(height: 16),
 
                     // ── Steps to Earn ──────────────────────────────────
                     _buildStepsSection(steps),
@@ -391,6 +359,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                         children: [
                           Row(
                             children: [
+                              if (isCompleted)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -405,7 +374,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                                     ),
                                   ),
                                   child: Text(
-                                    isCompleted ? 'COMPLETED' : 'UNLOCKED OFFER',
+                                    'COMPLETED',
                                     style: GoogleFonts.inter(
                                       color: Colors.cyan.shade700,
                                       fontSize: 9,
@@ -598,65 +567,67 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
   }
 
   List<String> _resolveSteps(Map<String, dynamic> offer) {
-    // 1. Check explicit steps list
+    List<String> finalSteps = [];
+
+    // 1. Process explicit steps
     final rawSteps = offer['steps'] as List<dynamic>?;
-    final normalizedSteps =
-        rawSteps
-            ?.map((step) => _normalizeStepText(step))
-            .where((step) => step.isNotEmpty)
-            .toList() ??
-        const <String>[];
-    if (normalizedSteps.isNotEmpty) return normalizedSteps;
+    if (rawSteps != null && rawSteps.isNotEmpty) {
+      finalSteps = rawSteps
+          .map((step) => _normalizeStepText(step))
+          .where((step) => step.isNotEmpty)
+          .toList();
+    }
 
-    // 2. Check events list
-    final rawEvents = offer['events'] as List<dynamic>?;
-    if (rawEvents != null && rawEvents.isNotEmpty) {
-      final eventSteps = rawEvents.map((event) {
-        if (event is Map) {
-          final name = _normalizeStepText(event['event_name']);
-          final desc = _normalizeStepText(event['description'] ?? event['event_description'] ?? '');
-          return desc.isNotEmpty ? "$name|$desc" : name;
-        }
-        return '';
-      }).where((s) => s.isNotEmpty).toList();
-      
-      if (eventSteps.isNotEmpty) {
-         return ["Start Mission|Click 'Start Offer' to open the partner page.", ...eventSteps, "Verification|Reward will be credited after successful verification."];
+    // 2. Process events if no explicit steps (or complement them)
+    if (finalSteps.isEmpty) {
+      final rawEvents = offer['events'] as List<dynamic>?;
+      if (rawEvents != null && rawEvents.isNotEmpty) {
+        finalSteps = rawEvents.map((event) {
+          if (event is Map) {
+            final name = _normalizeStepText(event['event_name']);
+            final desc = event['description']?.toString().trim() ?? 
+                         event['event_description']?.toString().trim() ?? '';
+            return desc.isNotEmpty ? "$name|$desc" : name;
+          }
+          return '';
+        }).where((s) => s.isNotEmpty).toList();
       }
     }
 
-    // 3. Parse from Description (NEW)
-    final description = offer['description'] as String? ?? '';
-    if (description.isNotEmpty && description.contains('\n')) {
-      // Split by newlines and filter for lines that look like steps
-      final lines = description.split('\n');
-      final parsedSteps = <String>[];
-      
-      for (var line in lines) {
-        final clean = line.trim();
-        if (clean.isEmpty) continue;
-        
-        // Match patterns like "Step 1:", "1.", "- ", "• "
-        final stepPattern = RegExp(r'^(\d+[\.\)]|Step\s+\d+:?|[-•*])\s*(.*)', caseSensitive: false);
-        final match = stepPattern.firstMatch(clean);
-        
-        if (match != null) {
-          final content = match.group(2)?.trim() ?? '';
-          if (content.isNotEmpty) parsedSteps.add(content);
-        } else if (clean.length > 5 && clean.length < 100) {
-          // If no pattern but looks like a standalone sentence in a list-y description
-          parsedSteps.add(clean);
+    // 3. Fallback to Description parsing if still empty
+    if (finalSteps.isEmpty) {
+      final description = offer['description'] as String? ?? '';
+      if (description.isNotEmpty && description.contains('\n')) {
+        final lines = description.split('\n');
+        for (var line in lines) {
+          final clean = line.trim();
+          if (clean.isEmpty) continue;
+          final stepPattern = RegExp(r'^(\d+[\.\)]|Step\s+\d+:?|[-•*])\s*(.*)', caseSensitive: false);
+          final match = stepPattern.firstMatch(clean);
+          if (match != null) {
+            final content = match.group(2)?.trim() ?? '';
+            if (content.isNotEmpty) finalSteps.add(content);
+          } else if (clean.length > 5 && clean.length < 100) {
+            finalSteps.add(clean);
+          }
         }
       }
-      
-      if (parsedSteps.isNotEmpty) return parsedSteps;
     }
 
-    return const [
-      "Click 'Start Offer' to open the partner page.",
-      'Complete the required action for this offer.',
-      'Receive your cash reward after successful verification.',
-    ];
+    // 4. Ensure "Start Mission" and "Verification" are added if we have steps
+    if (finalSteps.isNotEmpty) {
+      // Don't duplicate "Start Mission" if already present
+      if (!finalSteps.any((s) => s.toLowerCase().contains("start mission"))) {
+        finalSteps.insert(0, "Start Mission|Click 'Start Offer' to open the partner page.");
+      }
+      
+      // Don't duplicate "Verification" if already present
+      if (!finalSteps.any((s) => s.toLowerCase().contains("verification"))) {
+        finalSteps.add("Verification|Reward will be credited after successful verification.");
+      }
+    }
+
+    return finalSteps;
   }
 
   bool _isParsedAsSteps(String description) {
@@ -677,7 +648,8 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
   String _normalizeStepText(dynamic value) {
     final text = value?.toString().trim() ?? '';
     if (text.isEmpty) return '';
-    return text.replaceAll(RegExp(r'\s+'), ' ');
+    // Replace multiple spaces with a single space, but preserve newlines
+    return text.replaceAll(RegExp(r'[^\S\r\n]+'), ' ');
   }
 
   Widget _buildSectionHeader(IconData icon, String title) {
