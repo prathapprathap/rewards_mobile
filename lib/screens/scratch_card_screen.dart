@@ -75,6 +75,8 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
 
       if (response['success'] == true && response['offer'] != null) {
         final offer = response['offer'];
+        final bool isScratched =
+            offer['is_scratched'] == true || offer['is_scratched'] == 1;
 
         // Check if this offer has been completed by the user
         await _checkOfferCompletion(userId, offer['id']);
@@ -82,8 +84,8 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
         setState(() {
           _offer = offer;
           _isLoading = false;
-          // If offer is already completed, show as pre-revealed
-          if (_isOfferCompleted) {
+          // Resume an already-scratched card in the revealed state.
+          if (isScratched || _isOfferCompleted) {
             _isRevealed = true;
             _hasScratched = true;
           }

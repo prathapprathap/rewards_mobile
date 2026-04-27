@@ -288,11 +288,11 @@ class ApiService {
         }),
       );
 
+      final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to track click');
+        return data;
       }
+      throw Exception(data['error'] ?? data['message'] ?? 'Failed to track click');
     } catch (e) {
       throw Exception('Error tracking click: $e');
     }
@@ -381,15 +381,50 @@ class ApiService {
   /// Get random scratchable offer for user
   Future<Map<String, dynamic>> getScratchableOffer(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/scratch/scratchable/$userId'),
-      );
+      final offers = await getUserOffers(userId);
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to get scratchable offer');
+      if (offers.isEmpty) {
+        return {
+          'success': false,
+          'message': 'No offers available',
+        };
       }
+
+      Map<String, dynamic>? selectedOffer;
+
+      for (final rawOffer in offers) {
+        final offer = Map<String, dynamic>.from(rawOffer as Map);
+        final isCompleted =
+            offer['is_completed'] == true || offer['is_completed'] == 1;
+        final isScratched =
+            offer['is_scratched'] == true || offer['is_scratched'] == 1;
+
+        if (isScratched && !isCompleted) {
+          selectedOffer = offer;
+          break;
+        }
+      }
+
+      selectedOffer ??= offers
+          .cast<Map>()
+          .map((offer) => Map<String, dynamic>.from(offer))
+          .firstWhere(
+            (offer) =>
+                offer['is_scratched'] != true && offer['is_scratched'] != 1,
+            orElse: () => <String, dynamic>{},
+          );
+
+      if (selectedOffer.isEmpty) {
+        selectedOffer = offers
+            .cast<Map>()
+            .map((offer) => Map<String, dynamic>.from(offer))
+            .first;
+      }
+
+      return {
+        'success': true,
+        'offer': selectedOffer,
+      };
     } catch (e) {
       throw Exception('Error getting scratchable offer: $e');
     }
@@ -402,16 +437,16 @@ class ApiService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/scratch/scratched'),
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId/scratch-offer'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': userId, 'offerId': offerId}),
+        body: jsonEncode({'offer_id': offerId}),
       );
 
+      final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to mark offer as scratched');
+        return data;
       }
+      throw Exception(data['message'] ?? 'Failed to mark offer as scratched');
     } catch (e) {
       throw Exception('Error marking offer as scratched: $e');
     }

@@ -91,32 +91,23 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted && banners.isNotEmpty) {
         setState(() {
           _banners = banners.map((b) {
-            // Map action_type and other fields for UI
-            final type = b['action_type']?.toString().toLowerCase() ?? 'url';
-            IconData icon = Icons.star_rounded;
-            Color c1 = const Color(0xFF6A11CB);
-            Color c2 = const Color(0xFF2575FC);
-
-            if (type == 'refer') {
-              icon = Icons.share_rounded;
-              c1 = const Color(0xFF6A11CB);
-              c2 = const Color(0xFF2575FC);
-            } else if (type == 'offers') {
-              icon = Icons.card_giftcard;
-              c1 = const Color(0xFF00C9FF);
-              c2 = const Color(0xFF92FE9D);
-            }
+            final rawValue =
+                (b['click_url'] ?? b['action_value'] ?? '').toString().trim();
 
             return {
               'id': b['id'],
-              'subtitle': (b['subtitle'] ?? b['title'] ?? '').toString().replaceAll('\\n', '\n'),
-              'action': b['title'] ?? 'CLICK HERE! ✦',
-              'type': type,
-              'value': b['action_value'],
+              'subtitle': (b['subtitle'] ?? b['title'] ?? '')
+                  .toString()
+                  .replaceAll('\\n', '\n'),
+              'action': (b['title']?.toString().trim().isNotEmpty ?? false)
+                  ? b['title']
+                  : 'OPEN NOW! ✦',
+              'type': 'url',
+              'value': rawValue,
               'image_url': b['image_url'],
-              'color1': c1,
-              'color2': c2,
-              'icon': icon,
+              'color1': const Color(0xFF6A11CB),
+              'color2': const Color(0xFF2575FC),
+              'icon': Icons.open_in_new_rounded,
             };
           }).toList();
         });
@@ -431,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleBannerClick(Map<String, dynamic> banner) async {
     final type = banner['type']?.toString().toLowerCase();
-    final value = banner['value']?.toString();
+    final value = banner['value']?.toString().trim();
 
     switch (type) {
       case 'refer':
@@ -449,7 +440,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'url':
         if (value != null && value.isNotEmpty) {
           final uri = Uri.parse(value);
-          if (await canLaunchUrl(uri)) await launchUrl(uri);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
         }
         break;
 
