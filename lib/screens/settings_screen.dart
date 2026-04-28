@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/settings_provider.dart';
+import '../providers/user_provider.dart';
+import '../services/api_service.dart';
+
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -148,6 +151,17 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.help_outline, label: 'Assistance'),
                   const SizedBox(height: 12),
                   _buildSupportCard(),
+
+                  const SizedBox(height: 12),
+                  _buildSettingsTile(
+                    context,
+                    icon: Icons.no_accounts_outlined,
+                    iconColor: AppColors.error,
+                    iconBg: AppColors.errorContainer.withValues(alpha: 0.5),
+                    title: 'Deactivate Account',
+                    subtitle: 'Permanently remove your kinetic data',
+                    onTap: () => _showDeactivateDialog(context),
+                  ),
 
                   const SizedBox(height: 32),
 
@@ -390,5 +404,114 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  // ─── Deactivate Dialog ──────────────────────────────────────────────────
+  void _showDeactivateDialog(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+    if (user == null) return;
+
+    final noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          'Deactivate Account?',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will send a request to the admin to permanently delete your account and balance (₹${user.walletBalance}). This action is irreversible once processed.',
+              style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: noteController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: 'Optional: Why are you leaving?',
+                hintStyle: GoogleFonts.inter(fontSize: 13),
+                filled: true,
+                fillColor: AppColors.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              try {
+                Navigator.pop(context); // Close dialog
+                
+                // Show loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Submitting request...')),
+                );
+
+                await ApiService().requestAccountDeletion(
+                  user.id,
+                  note: noteController.text.isEmpty ? null : noteController.text,
+                );
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  _showSuccessDialog(context, 'Request Submitted', 
+                    'Your deactivation request has been sent to the admin. It will be processed within 7 days.');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+                  );
+                }
+              }
+            },
+            child: Text('Request Deletion', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green),
+            const SizedBox(width: 10),
+            Text(title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Text(message, style: GoogleFonts.inter(fontSize: 14)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
   }
 }
+

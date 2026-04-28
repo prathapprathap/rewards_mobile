@@ -550,4 +550,21 @@ class ApiService {
       throw Exception('Error updating payout details: $e');
     }
   }
+
+  /// Request account deletion — sends a request to admin for review.
+  /// [note] is an optional reason supplied by the user.
+  Future<Map<String, dynamic>> requestAccountDeletion(
+    int userId, {
+    String? note,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/users/$userId/request-deactivation'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'note': note ?? 'Requested via app'}),
+    );
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) return data;
+    throw Exception(data['message'] ?? 'Failed to submit deletion request');
+  }
 }
+
