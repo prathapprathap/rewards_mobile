@@ -250,16 +250,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                     // ── Steps to Earn ──────────────────────────────────
                     _buildStepsSection(steps),
 
-                    const SizedBox(height: 36),
-
-                    // ── Terms & Speed Bento ────────────────────────────
-                    Row(
-                      children: [
-                        Expanded(child: _buildTermsCard(offer)),
-                        const SizedBox(width: 14),
-                        Expanded(child: _buildSpeedCard()),
-                      ],
-                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -357,36 +348,6 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              if (isCompleted)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 5,
-                                ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.cyan.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(99),
-                                    border: Border.all(
-                                      color: Colors.cyan.withValues(alpha: 0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'COMPLETED',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.cyan.shade700,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                ),
-                              // Removed side label from detail page as per user request
-                            ],
-                          ),
-                          const SizedBox(height: 14),
                           Text(
                             offer['offer_name'] ??
                                 offer['heading'] ??
@@ -459,76 +420,6 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                   ],
                 ),
 
-                const SizedBox(height: 20),
-
-                // Meta chips grid
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetaChip(
-                        icon: Icons.timer,
-                        color: AppColors.secondary,
-                        label: 'Expires in',
-                        value: '2 days, 14h',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildMetaChip(
-                        icon: Icons.verified,
-                        color: const Color(0xFF27AE60), // Updated tick color
-                        label: 'Reliability',
-                        value: 'Guaranteed',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetaChip({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                  ),
-                ),
               ],
             ),
           ),
@@ -793,83 +684,6 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
           ),
         ),
       ],
-    );
-  }
-
-  // ─── Terms / Speed Cards ──────────────────────────────────────────────────
-
-  Widget _buildTermsCard(Map<String, dynamic> offer) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: AppColors.onSurfaceVariant, size: 22),
-          const SizedBox(height: 12),
-          Text(
-            'TERMS',
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              color: AppColors.onSurfaceVariant,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            offer['terms'] as String? ??
-                'Must be a new customer. Account must remain active for 30 days.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.onSurface,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpeedCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryFixed.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.secondary.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.bolt, color: AppColors.secondary, size: 22),
-          const SizedBox(height: 12),
-          Text(
-            'SPEED',
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              color: AppColors.onSecondaryContainer,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Reward typically processes within 24 hours of successful verification.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.onSurface,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

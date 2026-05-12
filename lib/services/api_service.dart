@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
 import '../models/offer_model.dart';
+import 'api_cache.dart';
 
 class ApiService {
   Future<User> loginWithGoogle({
@@ -150,7 +151,6 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> settingsList = jsonDecode(response.body);
-        // Convert list of {setting_key, setting_value} to Map
         final Map<String, dynamic> settingsMap = {};
         for (var item in settingsList) {
           settingsMap[item['setting_key']] = item['setting_value'];
@@ -162,6 +162,80 @@ class ApiService {
     } catch (e) {
       throw Exception('Error fetching app settings: $e');
     }
+  }
+
+  /// Cache-first variant for screens that don't need real-time freshness.
+  /// Calls [onData] up to twice: once with cached data (instant), once with
+  /// fresh data when the network refresh lands.
+  Future<void> getOfferwallOffersCached(
+    void Function(List<Offer>) onData, {
+    Duration ttl = const Duration(minutes: 5),
+  }) async {
+    await cachedJson(
+      key: 'offerwall_offers',
+      ttl: ttl,
+      fetch: () async {
+        final res = await http.get(
+          Uri.parse('${ApiConstants.baseUrl}/offers/offerwall'),
+        );
+        if (res.statusCode != 200) throw Exception('offerwall failed');
+        return res.body;
+      },
+      onValue: (json) {
+        if (json is List) {
+          onData(json
+              .map((e) => Offer.fromJson(e as Map<String, dynamic>))
+              .toList());
+        }
+      },
+    );
+  }
+
+  Future<void> getBannersCached(
+    void Function(List<dynamic>) onData, {
+    Duration ttl = const Duration(minutes: 10),
+  }) async {
+    await cachedJson(
+      key: 'banners',
+      ttl: ttl,
+      fetch: () async {
+        final res = await http.get(
+          Uri.parse('${ApiConstants.baseUrl}/offer18/banners'),
+        );
+        if (res.statusCode != 200) throw Exception('banners failed');
+        return res.body;
+      },
+      onValue: (json) {
+        if (json is Map && json['banners'] is List) {
+          onData(json['banners'] as List);
+        }
+      },
+    );
+  }
+
+  Future<void> getUserOffersCached(
+    int userId,
+    void Function(List<dynamic>) onData, {
+    Duration ttl = const Duration(minutes: 2),
+  }) async {
+    await cachedJson(
+      key: 'user_offers_$userId',
+      ttl: ttl,
+      fetch: () async {
+        final res = await http.get(
+          Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers'),
+        );
+        if (res.statusCode != 200) throw Exception('user offers failed');
+        return res.body;
+      },
+      onValue: (json) {
+        if (json is List) onData(json);
+      },
+    );
+  }
+
+  void invalidateUserOffersCache(int userId) {
+    ApiCache.instance.invalidate('user_offers_$userId');
   }
 
   Future<Map<String, dynamic>> redeemPromoCode(int userId, String code) async {
@@ -549,6 +623,53 @@ class ApiService {
     } catch (e) {
       throw Exception('Error updating payout details: $e');
     }
+  }
+
+  // ── Version / Maintenance gate ─────────────────────────────────────────────
+
+  /// Returns maintenance + update state for the given app [version].
+  Future<Map<String, dynamic>> versionCheck(String version) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/users/app/version-check?version=$version'),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Version check failed');
+  }
+
+  // ── FCM Token registration ─────────────────────────────────────────────────
+
+  Future<void> registerFcmToken(int userId, String token) async {
+    try {
+      await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId/fcm-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token}),
+      );
+    } catch (e) {
+      // ignore — non-blocking
+    }
+  }
+
+  // ── In-app notifications ───────────────────────────────────────────────────
+
+  Future<List<dynamic>> getUserNotifications(int userId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/users/$userId/notifications'),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load notifications');
+  }
+
+  Future<void> markNotificationRead(int userId, int notificationId) async {
+    try {
+      await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId/notifications/$notificationId/read'),
+      );
+    } catch (_) {}
   }
 
   /// Request account deletion — sends a request to admin for review.

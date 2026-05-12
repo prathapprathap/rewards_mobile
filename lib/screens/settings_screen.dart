@@ -5,6 +5,7 @@ import '../constants/colors.dart';
 import '../providers/settings_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import 'notifications_screen.dart';
 
 
 class SettingsScreen extends StatelessWidget {
@@ -138,7 +139,10 @@ class SettingsScreen extends StatelessWidget {
                           iconBg: AppColors.tertiaryContainer,
                           title: 'Notifications',
                           subtitle: 'Alerts for rewards & activity',
-                          onTap: () {},
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                          ),
                         ),
                       ),
                     ],

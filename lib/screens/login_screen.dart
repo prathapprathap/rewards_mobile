@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -9,6 +10,24 @@ import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import 'main_layout.dart';
 import '../widgets/custom_toast.dart';
+
+/// Tries to extract a referral code from a free-text string.
+/// Matches: "code: ABC123", "ref=ABC123", or a 6–10 char alnum token
+/// inside a known share-message phrase.
+String? extractReferralCode(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  final text = raw.toString();
+  final patterns = <RegExp>[
+    RegExp(r'referral code[:\s]+([A-Z0-9]{4,12})', caseSensitive: false),
+    RegExp(r'\bref(?:erral)?[=:]\s*([A-Z0-9]{4,12})', caseSensitive: false),
+    RegExp(r'/api/download/([A-Z0-9]{4,12})', caseSensitive: false),
+  ];
+  for (final re in patterns) {
+    final m = re.firstMatch(text);
+    if (m != null) return m.group(1)!.toUpperCase();
+  }
+  return null;
+}
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -245,11 +264,25 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
   bool _initialized = false;
   bool _isHandlingSignIn = false;
   StreamSubscription? _authSubscription;
+  String? _autoDetectedCode;
 
   @override
   void initState() {
     super.initState();
     _initializeGoogleSignIn();
+    _tryAutoDetectReferral();
+  }
+
+  /// Silently scans the clipboard for a referral code on launch. The code
+  /// is captured in memory and passed to the login call — no UI shown.
+  Future<void> _tryAutoDetectReferral() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final code = extractReferralCode(data?.text);
+      if (code != null && mounted) {
+        _autoDetectedCode = code;
+      }
+    } catch (_) {}
   }
 
   @override
@@ -289,6 +322,7 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
         account.email,
         account.displayName,
         account.photoUrl,
+        referralCode: _autoDetectedCode,
       );
       
       // Refresh settings upon login to detect latest branding colors

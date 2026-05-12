@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../constants/colors.dart';
 
 class SettingsProvider with ChangeNotifier {
+  static const _cacheKey = 'cached_app_settings_json';
+
   Map<String, dynamic> _settings = {};
   bool _isLoading = true;
 
@@ -11,19 +14,38 @@ class SettingsProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
 
   Future<void> loadSettings() async {
+    // 1. Instant hydrate from cache so the UI never waits on the network.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString(_cacheKey);
+      if (cached != null && cached.isNotEmpty) {
+        final decoded = jsonDecode(cached);
+        if (decoded is Map) {
+          _settings = Map<String, dynamic>.from(decoded);
+          if (_settings['primary_color'] != null) {
+            AppColors.updateColors(_settings['primary_color'].toString());
+          }
+          _isLoading = false;
+          notifyListeners();
+        }
+      }
+    } catch (_) {}
+
+    // 2. Refresh from server in the background; emit again when it lands.
     try {
       final api = ApiService();
-      _settings = await api.getAppSettings();
+      final fresh = await api.getAppSettings();
+      _settings = fresh;
 
-      // Update dynamic colors if present
       if (_settings.containsKey('primary_color')) {
         final colorHex = _settings['primary_color'].toString();
         AppColors.updateColors(colorHex);
-
-        // Cache for next launch
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('cached_primary_color', colorHex);
       }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cacheKey, jsonEncode(_settings));
 
       _isLoading = false;
       notifyListeners();

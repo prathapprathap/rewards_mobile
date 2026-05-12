@@ -87,8 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchBanners() async {
     try {
       final api = ApiService();
-      final banners = await api.getBanners();
-      if (mounted && banners.isNotEmpty) {
+      // Cache-first: instant render from cache, then refresh in background.
+      await api.getBannersCached((banners) {
+        if (!mounted || banners.isEmpty) return;
         setState(() {
           _banners = banners.map((b) {
             final rawValue =
@@ -111,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
             };
           }).toList();
         });
-      }
+      });
     } catch (e) {
       debugPrint('Error fetching banners: $e');
     }
@@ -126,13 +127,15 @@ class _HomeScreenState extends State<HomeScreen> {
         if (mounted) setState(() => _isLoading = false);
         return;
       }
-      final offers = await api.getUserOffers(userId);
-      if (mounted) {
+      // Cache-first user offers — fires the setState up to twice
+      // (immediately from cache, then again after refresh).
+      await api.getUserOffersCached(userId, (offers) {
+        if (!mounted) return;
         setState(() {
           _offers = offers;
           _isLoading = false;
         });
-      }
+      });
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }

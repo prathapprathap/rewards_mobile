@@ -1,24 +1,45 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'constants/colors.dart';
 import 'providers/user_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/app_gate_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_layout.dart';
+import 'screens/maintenance_screen.dart';
+import 'screens/force_update_screen.dart';
+import 'services/fcm_service.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Background isolate — Firebase must be initialized here too.
+  await Firebase.initializeApp();
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load cached colors before app starts to avoid "Green flash"
   final prefs = await SharedPreferences.getInstance();
   final cachedColor = prefs.getString('cached_primary_color');
   if (cachedColor != null) {
     AppColors.updateColors(cachedColor);
   }
-  
+
+  // Initialize Firebase (uses google-services.json on Android)
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase init skipped: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -27,32 +48,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Rewards typographic pairing:
-    //  • Plus Jakarta Sans — display / headlines / brand moments
-    //  • Inter             — body / labels / data
     final baseTextTheme = GoogleFonts.interTextTheme();
-    final headlineFont  = GoogleFonts.plusJakartaSans();
+    final headlineFont = GoogleFonts.plusJakartaSans();
 
     final textTheme = baseTextTheme.copyWith(
-      displayLarge:  headlineFont.copyWith(fontWeight: FontWeight.w800, letterSpacing: -1.5),
+      displayLarge: headlineFont.copyWith(fontWeight: FontWeight.w800, letterSpacing: -1.5),
       displayMedium: headlineFont.copyWith(fontWeight: FontWeight.w800, letterSpacing: -1.0),
-      displaySmall:  headlineFont.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+      displaySmall: headlineFont.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5),
       headlineLarge: headlineFont.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5),
-      headlineMedium:headlineFont.copyWith(fontWeight: FontWeight.w700),
+      headlineMedium: headlineFont.copyWith(fontWeight: FontWeight.w700),
       headlineSmall: headlineFont.copyWith(fontWeight: FontWeight.w700),
-      titleLarge:    headlineFont.copyWith(fontWeight: FontWeight.w700),
-      titleMedium:   headlineFont.copyWith(fontWeight: FontWeight.w600),
-      titleSmall:    headlineFont.copyWith(fontWeight: FontWeight.w600),
+      titleLarge: headlineFont.copyWith(fontWeight: FontWeight.w700),
+      titleMedium: headlineFont.copyWith(fontWeight: FontWeight.w600),
+      titleSmall: headlineFont.copyWith(fontWeight: FontWeight.w600),
     );
 
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()..loadUser()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()..loadSettings()),
+        ChangeNotifierProvider(create: (_) => AppGateProvider()..check()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) {
-          // Re-build theme every time settings (including primary_color) are loaded
           return MaterialApp(
             title: 'Rupi Rewards',
             debugShowCheckedModeBanner: false,
@@ -105,27 +123,116 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _fcmInitialized = false;
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
+    final gate = Provider.of<AppGateProvider>(context);
 
+    // Only block on user+settings. Version/maintenance check runs in the
+    // background — once it lands, the gate screens take over if needed.
     if (userProvider.isLoading || settingsProvider.isLoading) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
-    if (userProvider.user != null) {
-      return const MainLayout();
+    // Hard blocks (only enforced once the gate check has resolved).
+    if (gate.loaded && gate.state == AppGateState.maintenance) {
+      return const MaintenanceScreen();
+    }
+    if (gate.loaded && gate.state == AppGateState.forceUpdate) {
+      return const ForceUpdateScreen();
     }
 
-    return const LoginScreen();
+    // Logged-out path.
+    if (userProvider.user == null) {
+      return const LoginScreen();
+    }
+
+    // Logged-in: start FCM (once) and show the app.
+    if (!_fcmInitialized) {
+      _fcmInitialized = true;
+      FcmService().init(userId: userProvider.user!.id);
+    }
+
+    final showOptional =
+        gate.state == AppGateState.optionalUpdate && !gate.optionalDismissed;
+
+    return Stack(
+      children: [
+        const MainLayout(),
+        if (showOptional)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 90,
+            child: _OptionalUpdateBanner(),
+          ),
+      ],
+    );
+  }
+}
+
+class _OptionalUpdateBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final gate = context.watch<AppGateProvider>();
+    return Material(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 8,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+        child: Row(
+          children: [
+            const Icon(Icons.system_update_alt_rounded, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Update available',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                  ),
+                  Text(
+                    'v${gate.latestVersion} is out. Tap to update.',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (gate.updateUrl.isNotEmpty) {
+                  final uri = Uri.tryParse(gate.updateUrl);
+                  if (uri != null) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                }
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              child: const Text('UPDATE'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white70),
+              onPressed: () => context.read<AppGateProvider>().dismissOptional(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

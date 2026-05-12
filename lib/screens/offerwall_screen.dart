@@ -48,16 +48,18 @@ class _OfferwallScreenState extends State<OfferwallScreen>
     });
     try {
       final api = ApiService();
-      final offers = await api.getOfferwallOffers();
-      if (mounted) {
+      // Cache-first: instant render from cache, then refresh in background.
+      await api.getOfferwallOffersCached((offers) {
+        if (!mounted) return;
         setState(() {
           _offers = offers;
           _isLoading = false;
+          _errorMessage = null;
         });
-        _fadeController.forward();
-      }
+        if (!_fadeController.isCompleted) _fadeController.forward();
+      });
     } catch (e) {
-      if (mounted) {
+      if (mounted && _offers.isEmpty) {
         setState(() {
           _errorMessage = 'Failed to load offers. Please try again.';
           _isLoading = false;

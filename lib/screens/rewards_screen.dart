@@ -30,9 +30,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
       if (userId == null) return;
 
       final api = ApiService();
-      final List<dynamic> offers = await api.getUserOffers(userId);
-      
-      if (mounted) {
+      // Cache-first user offers — fires up to twice (cache, then refresh).
+      await api.getUserOffersCached(userId, (offers) {
+        if (!mounted) return;
         setState(() {
           _rewards = offers.map((offer) {
             final bool isScratched = offer['is_scratched'] == true || offer['is_scratched'] == 1;
@@ -88,7 +88,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
           }).toList();
           _isLoading = false;
         });
-      }
+      });
     } catch (e) {
       print('Error fetching rewards: $e');
       if (mounted) setState(() => _isLoading = false);
