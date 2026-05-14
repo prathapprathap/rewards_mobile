@@ -543,6 +543,44 @@ class ApiService {
     }
   }
 
+  /// Upload a task screenshot for an offer that requires verification.
+  /// [imageBase64DataUrl] must be a full data URL (e.g. "data:image/png;base64,...").
+  Future<Map<String, dynamic>> uploadTaskSubmission({
+    required int userId,
+    required int offerId,
+    required String imageBase64DataUrl,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submissions'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'image_file': imageBase64DataUrl}),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return data is Map<String, dynamic> ? data : {};
+    }
+    throw Exception(data is Map && data['message'] != null
+        ? data['message']
+        : 'Upload failed (${response.statusCode})');
+  }
+
+  /// Fetch the latest submission status for a user+offer (null if none).
+  Future<Map<String, dynamic>?> getTaskSubmission({
+    required int userId,
+    required int offerId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submission'),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic> && data['submission'] != null) {
+        return Map<String, dynamic>.from(data['submission']);
+      }
+    }
+    return null;
+  }
+
   /// Daily check-in
   Future<Map<String, dynamic>> dailyCheckIn(int userId) async {
     try {

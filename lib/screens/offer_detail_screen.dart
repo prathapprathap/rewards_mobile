@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'web_view_screen.dart';
@@ -21,7 +24,9 @@ class OfferDetailScreen extends StatefulWidget {
 class _OfferDetailScreenState extends State<OfferDetailScreen> {
   bool _isLoading = true;
   bool _isStarting = false;
+  bool _isUploading = false;
   Map<String, dynamic>? _offerDetails;
+  Map<String, dynamic>? _submission;
   String? _errorMessage;
 
   @override
@@ -30,13 +35,38 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     _loadOfferDetails();
   }
 
+  bool get _requiresScreenshot =>
+      _offerDetails != null &&
+      (_offerDetails!['requires_screenshot'] == true ||
+          _offerDetails!['requires_screenshot'] == 1);
+
+  String? get _submissionStatus =>
+      _submission != null ? _submission!['status'] as String? : null;
+
   Future<void> _loadOfferDetails() async {
     try {
       final api = ApiService();
       final response = await api.getOfferDetails(widget.offerId);
       if (response['success'] == true && response['offer'] != null) {
+        final offer = Map<String, dynamic>.from(response['offer']);
+        Map<String, dynamic>? submission;
+        if ((offer['requires_screenshot'] == true ||
+                offer['requires_screenshot'] == 1) &&
+            mounted) {
+          final userId =
+              Provider.of<UserProvider>(context, listen: false).user?.id;
+          if (userId != null) {
+            try {
+              submission = await api.getTaskSubmission(
+                userId: userId,
+                offerId: widget.offerId,
+              );
+            } catch (_) {}
+          }
+        }
         setState(() {
-          _offerDetails = response['offer'];
+          _offerDetails = offer;
+          _submission = submission;
           _isLoading = false;
         });
       } else {
@@ -50,6 +80,62 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         _errorMessage = 'Failed to load offer details';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _uploadScreenshot() async {
+    final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
+    if (userId == null) {
+      _showSnack('Please login first', AppColors.error);
+      return;
+    }
+
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+      maxWidth: 1600,
+    );
+    if (picked == null) return;
+
+    setState(() => _isUploading = true);
+    try {
+      final bytes = await File(picked.path).readAsBytes();
+      final ext = picked.path.split('.').last.toLowerCase();
+      final mime = (ext == 'jpg' || ext == 'jpeg')
+          ? 'image/jpeg'
+          : (ext == 'webp')
+              ? 'image/webp'
+              : 'image/png';
+      final dataUrl = 'data:$mime;base64,${base64Encode(bytes)}';
+
+      final api = ApiService();
+      final result = await api.uploadTaskSubmission(
+        userId: userId,
+        offerId: widget.offerId,
+        imageBase64DataUrl: dataUrl,
+      );
+
+      if (mounted) {
+        _showSnack(
+          'Screenshot uploaded. Pending admin review.',
+          AppColors.primary,
+        );
+        setState(() {
+          _submission = result['submission'] is Map
+              ? Map<String, dynamic>.from(result['submission'])
+              : {'status': 'pending'};
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnack(
+          e.toString().replaceFirst('Exception: ', ''),
+          AppColors.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -249,6 +335,11 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
 
                     // ── Steps to Earn ──────────────────────────────────
                     _buildStepsSection(steps),
+
+                    if (_requiresScreenshot) ...[
+                      const SizedBox(height: 16),
+                      _buildScreenshotPanel(),
+                    ],
 
                     const SizedBox(height: 24),
                   ],
@@ -684,6 +775,197 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
           ),
         ),
       ],
+    );
+  }
+
+  // ─── Screenshot Panel ─────────────────────────────────────────────────────
+
+  Widget _buildScreenshotPanel() {
+    final status = _submissionStatus;
+    final note = _submission?['admin_note'] as String?;
+
+    Color badgeBg;
+    Color badgeFg;
+    String badgeText;
+    String subtitle;
+    bool canUpload;
+
+    switch (status) {
+      case 'pending':
+        badgeBg = const Color(0xFFFFF4D6);
+        badgeFg = const Color(0xFFB4760E);
+        badgeText = 'Pending';
+        subtitle = 'Your screenshot is awaiting admin review.';
+        canUpload = false;
+        break;
+      case 'approved':
+        badgeBg = const Color(0xFFD4F5E2);
+        badgeFg = const Color(0xFF137A3D);
+        badgeText = 'Approved';
+        subtitle = 'Reward credited to your wallet.';
+        canUpload = false;
+        break;
+      case 'rejected':
+        badgeBg = const Color(0xFFFDE2E2);
+        badgeFg = const Color(0xFFB42318);
+        badgeText = 'Rejected';
+        subtitle = note != null && note.isNotEmpty
+            ? note
+            : 'Submission rejected. Please try again.';
+        canUpload = true;
+        break;
+      default:
+        badgeBg = AppColors.primary.withValues(alpha: 0.12);
+        badgeFg = AppColors.primary;
+        badgeText = 'Action Required';
+        subtitle = 'Upload a screenshot to verify task completion.';
+        canUpload = true;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Submit Screenshot',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  badgeText,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: badgeFg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_submission?['screenshot_url'] is String &&
+              (_submission!['screenshot_url'] as String).isNotEmpty) ...[
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                _submission!['screenshot_url'],
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 80,
+                  color: AppColors.surfaceContainer,
+                  alignment: Alignment.center,
+                  child: Icon(Icons.broken_image,
+                      color: AppColors.outline, size: 28),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: GestureDetector(
+              onTap: (!canUpload || _isUploading) ? null : _uploadScreenshot,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: !canUpload
+                      ? AppColors.surfaceContainer
+                      : AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: !canUpload
+                        ? AppColors.outlineVariant
+                        : AppColors.primary.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_isUploading)
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    else ...[
+                      Icon(
+                        Icons.upload_file,
+                        color: !canUpload
+                            ? AppColors.outline
+                            : AppColors.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        status == 'rejected' ? 'Re-upload' : 'Upload',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: !canUpload
+                              ? AppColors.onSurfaceVariant
+                              : AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
