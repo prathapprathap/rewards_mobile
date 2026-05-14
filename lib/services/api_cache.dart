@@ -90,9 +90,8 @@ Future<void> cachedJson({
     } catch (_) {}
   }
 
-  final fresh = await cache.isFresh(key, ttl);
-  if (fresh && cached != null) return; // skip network if cache is still fresh
-
+  // Stale-while-revalidate: always refresh in the background so admin-side
+  // changes propagate without waiting for TTL expiry or a re-login.
   try {
     final body = await fetch();
     await cache.write(key, body);
