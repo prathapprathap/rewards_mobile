@@ -28,11 +28,74 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
   Map<String, dynamic>? _offerDetails;
   Map<String, dynamic>? _submission;
   String? _errorMessage;
+  final TextEditingController _contactController = TextEditingController();
+  String? _contactError;
 
   @override
   void initState() {
     super.initState();
     _loadOfferDetails();
+  }
+
+  @override
+  void dispose() {
+    _contactController.dispose();
+    super.dispose();
+  }
+
+  /// Returns null if [value] is a valid WhatsApp number or email, or an error string.
+  String? _validateContact(String value) {
+    final v = value.trim();
+    if (v.isEmpty) return 'Enter your WhatsApp number or email';
+    final phoneRe = RegExp(r'^\+?\d[\d\s-]{7,18}$');
+    final emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    if (phoneRe.hasMatch(v) || emailRe.hasMatch(v)) return null;
+    return 'Enter a valid WhatsApp number or email';
+  }
+
+  void _showImageViewer(String url) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            InteractiveViewer(
+              minScale: 0.8,
+              maxScale: 4,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 200,
+                    color: Colors.black26,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image,
+                        color: Colors.white70, size: 40),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Material(
+                color: Colors.black54,
+                shape: const CircleBorder(),
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   bool get _requiresScreenshot =>
@@ -90,6 +153,14 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       return;
     }
 
+    final contactErr = _validateContact(_contactController.text);
+    if (contactErr != null) {
+      setState(() => _contactError = contactErr);
+      _showSnack(contactErr, AppColors.error);
+      return;
+    }
+    setState(() => _contactError = null);
+
     final picker = ImagePicker();
     final XFile? picked = await picker.pickImage(
       source: ImageSource.gallery,
@@ -114,6 +185,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         userId: userId,
         offerId: widget.offerId,
         imageBase64DataUrl: dataUrl,
+        contactInfo: _contactController.text.trim(),
       );
 
       if (mounted) {
@@ -890,19 +962,127 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
           if (_submission?['screenshot_url'] is String &&
               (_submission!['screenshot_url'] as String).isNotEmpty) ...[
             const SizedBox(height: 14),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(
-                _submission!['screenshot_url'],
-                height: 140,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 80,
-                  color: AppColors.surfaceContainer,
-                  alignment: Alignment.center,
-                  child: Icon(Icons.broken_image,
-                      color: AppColors.outline, size: 28),
+            GestureDetector(
+              onTap: () => _showImageViewer(_submission!['screenshot_url']),
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.network(
+                      _submission!['screenshot_url'],
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 80,
+                        color: AppColors.surfaceContainer,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.broken_image,
+                            color: AppColors.outline, size: 28),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.zoom_in,
+                            color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tap to view',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_submission?['contact_info'] is String &&
+                (_submission!['contact_info'] as String).isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.contact_phone,
+                      size: 14, color: AppColors.onSurfaceVariant),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _submission!['contact_info'],
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+          if (canUpload) ...[
+            const SizedBox(height: 14),
+            Text(
+              'WhatsApp Number or Email',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.onSurface,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _contactController,
+              keyboardType: TextInputType.emailAddress,
+              enabled: !_isUploading,
+              onChanged: (_) {
+                if (_contactError != null) {
+                  setState(() => _contactError = null);
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'e.g. 9876543210 or you@email.com',
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.outline,
+                ),
+                errorText: _contactError,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                filled: true,
+                fillColor: AppColors.surfaceContainer,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: AppColors.outlineVariant,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: AppColors.outlineVariant,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: AppColors.primary,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),

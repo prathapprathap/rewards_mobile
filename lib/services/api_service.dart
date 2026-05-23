@@ -549,11 +549,15 @@ class ApiService {
     required int userId,
     required int offerId,
     required String imageBase64DataUrl,
+    required String contactInfo,
   }) async {
     final response = await http.post(
       Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submissions'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'image_file': imageBase64DataUrl}),
+      body: jsonEncode({
+        'image_file': imageBase64DataUrl,
+        'contact_info': contactInfo,
+      }),
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 201 || response.statusCode == 200) {
