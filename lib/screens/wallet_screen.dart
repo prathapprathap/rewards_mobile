@@ -102,7 +102,7 @@ class _WalletScreenState extends State<WalletScreen> {
               shape: BoxShape.circle,
             ),
             child: Image.asset(
-              'assets/images/logo.png',
+              'assets/images/app_icon.png',
               height: 24,
               errorBuilder: (c, e, s) =>
                   Icon(Icons.eco, color: AppColors.primary, size: 24),

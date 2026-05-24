@@ -157,6 +157,71 @@ _startDeepLinkFlow();
       ? url.replaceFirst('http://', 'https://')
       : url;
 
+  final isHttp =
+      safeUrl.startsWith('http://') || safeUrl.startsWith('https://');
+
+  // Deep-link / intent / market scheme → try installed app first, then Play
+  // Store, then fall back to opening the original web URL in Chrome.
+  if (!isHttp) {
+    // 1) Try opening the installed app via external application handler.
+    try {
+      final launched = await launchUrl(
+        Uri.parse(safeUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        if (mounted) Navigator.pop(context, true);
+        return;
+      }
+    } catch (_) {/* fall through */}
+
+    // 2) Not installed / no handler → Play Store using package name.
+    final pkg =
+        _extractPackageName(safeUrl) ?? _extractPackageName(widget.url);
+    if (pkg != null) {
+      try {
+        final ok = await launchUrl(
+          Uri.parse('market://details?id=$pkg'),
+          mode: LaunchMode.externalNonBrowserApplication,
+        );
+        if (ok) {
+          if (mounted) Navigator.pop(context, true);
+          return;
+        }
+      } catch (_) {/* fall through */}
+      try {
+        final ok = await launchUrl(
+          Uri.parse('https://play.google.com/store/apps/details?id=$pkg'),
+          mode: LaunchMode.externalApplication,
+        );
+        if (ok) {
+          if (mounted) Navigator.pop(context, true);
+          return;
+        }
+      } catch (_) {/* fall through */}
+    }
+
+    // 3) Last resort → open the original offer URL in in-app Chrome.
+    try {
+      final launched = await launchUrl(
+        Uri.parse(widget.url),
+        mode: LaunchMode.inAppBrowserView,
+      );
+      if (launched) {
+        if (mounted) Navigator.pop(context, true);
+        return;
+      }
+    } catch (_) {/* fall through */}
+
+    if (!mounted) return;
+    setState(() {
+      _isRedirected = false;
+      _errorMessage = 'Could not open this offer.';
+    });
+    return;
+  }
+
+  // Plain http(s) → open in in-app Chrome (no history persisted).
   try {
     final launched = await launchUrl(
       Uri.parse(safeUrl),
@@ -178,6 +243,20 @@ _startDeepLinkFlow();
       _errorMessage = 'Could not open this offer in your browser.';
     });
   }
+}
+
+String? _extractPackageName(String url) {
+  try {
+    // intent://...#Intent;...;package=com.x.y;end
+    final intentMatch = RegExp(r'package=([\w\.]+)').firstMatch(url);
+    if (intentMatch != null) return intentMatch.group(1);
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+    // market://details?id=... or play.google.com/store/apps/details?id=...
+    final id = uri.queryParameters['id'];
+    if (id != null && id.contains('.')) return id;
+  } catch (_) {}
+  return null;
 }
 
   Future<void> _launchStore(String url) async {

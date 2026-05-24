@@ -107,7 +107,7 @@ class LoginScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Image.asset(
-                          'assets/images/logo.png',
+                          'assets/images/app_icon.png',
                           fit: BoxFit.contain,
                           errorBuilder: (c, e, s) => Text(
                             'RR',
