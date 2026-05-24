@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'fill_form_screen.dart';
 import 'web_view_screen.dart';
 import '../widgets/custom_toast.dart';
 import '../constants/colors.dart';
@@ -24,12 +22,9 @@ class OfferDetailScreen extends StatefulWidget {
 class _OfferDetailScreenState extends State<OfferDetailScreen> {
   bool _isLoading = true;
   bool _isStarting = false;
-  bool _isUploading = false;
   Map<String, dynamic>? _offerDetails;
   Map<String, dynamic>? _submission;
   String? _errorMessage;
-  final TextEditingController _contactController = TextEditingController();
-  String? _contactError;
 
   @override
   void initState() {
@@ -37,20 +32,27 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     _loadOfferDetails();
   }
 
-  @override
-  void dispose() {
-    _contactController.dispose();
-    super.dispose();
+  int get _requiredScreenshotCount {
+    final raw = _offerDetails?['required_screenshot_count'];
+    final n = (raw is int) ? raw : int.tryParse('$raw') ?? 1;
+    return n.clamp(1, 5);
   }
 
-  /// Returns null if [value] is a valid WhatsApp number or email, or an error string.
-  String? _validateContact(String value) {
-    final v = value.trim();
-    if (v.isEmpty) return 'Enter your WhatsApp number or email';
-    final phoneRe = RegExp(r'^\+?\d[\d\s-]{7,18}$');
-    final emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    if (phoneRe.hasMatch(v) || emailRe.hasMatch(v)) return null;
-    return 'Enter a valid WhatsApp number or email';
+  List<String> get _demoScreenshots {
+    final raw = _offerDetails?['demo_screenshots'];
+    if (raw is List) {
+      return raw.whereType<String>().where((s) => s.isNotEmpty).toList();
+    }
+    return const [];
+  }
+
+  List<String> get _submissionScreenshotUrls {
+    final raw = _submission?['screenshot_urls'];
+    if (raw is List && raw.isNotEmpty) {
+      return raw.whereType<String>().toList();
+    }
+    final single = _submission?['screenshot_url'];
+    return (single is String && single.isNotEmpty) ? [single] : const [];
   }
 
   void _showImageViewer(String url) {
@@ -146,68 +148,28 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     }
   }
 
-  Future<void> _uploadScreenshot() async {
+  Future<void> _openFillForm() async {
     final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
     if (userId == null) {
       _showSnack('Please login first', AppColors.error);
       return;
     }
-
-    final contactErr = _validateContact(_contactController.text);
-    if (contactErr != null) {
-      setState(() => _contactError = contactErr);
-      _showSnack(contactErr, AppColors.error);
-      return;
-    }
-    setState(() => _contactError = null);
-
-    final picker = ImagePicker();
-    final XFile? picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 75,
-      maxWidth: 1600,
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => FillFormScreen(
+          offerId: widget.offerId,
+          offerName: _offerDetails?['offer_name']?.toString() ?? 'Offer',
+          rewardAmount: (_offerDetails?['amount'] is num)
+              ? (_offerDetails!['amount'] as num).toDouble()
+              : double.tryParse('${_offerDetails?['amount'] ?? 0}') ?? 0,
+          requiredCount: _requiredScreenshotCount,
+          demoScreenshots: _demoScreenshots,
+        ),
+      ),
     );
-    if (picked == null) return;
-
-    setState(() => _isUploading = true);
-    try {
-      final bytes = await File(picked.path).readAsBytes();
-      final ext = picked.path.split('.').last.toLowerCase();
-      final mime = (ext == 'jpg' || ext == 'jpeg')
-          ? 'image/jpeg'
-          : (ext == 'webp')
-              ? 'image/webp'
-              : 'image/png';
-      final dataUrl = 'data:$mime;base64,${base64Encode(bytes)}';
-
-      final api = ApiService();
-      final result = await api.uploadTaskSubmission(
-        userId: userId,
-        offerId: widget.offerId,
-        imageBase64DataUrl: dataUrl,
-        contactInfo: _contactController.text.trim(),
-      );
-
-      if (mounted) {
-        _showSnack(
-          'Screenshot uploaded. Pending admin review.',
-          AppColors.primary,
-        );
-        setState(() {
-          _submission = result['submission'] is Map
-              ? Map<String, dynamic>.from(result['submission'])
-              : {'status': 'pending'};
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnack(
-          e.toString().replaceFirst('Exception: ', ''),
-          AppColors.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
+    if (result == true && mounted) {
+      // Refresh submission status after successful upload
+      await _loadOfferDetails();
     }
   }
 
@@ -959,56 +921,37 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
               ),
             ],
           ),
-          if (_submission?['screenshot_url'] is String &&
-              (_submission!['screenshot_url'] as String).isNotEmpty) ...[
+          if (_submissionScreenshotUrls.isNotEmpty) ...[
             const SizedBox(height: 14),
-            GestureDetector(
-              onTap: () => _showImageViewer(_submission!['screenshot_url']),
-              child: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      _submission!['screenshot_url'],
-                      height: 140,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 80,
-                        color: AppColors.surfaceContainer,
-                        alignment: Alignment.center,
-                        child: Icon(Icons.broken_image,
-                            color: AppColors.outline, size: 28),
+            SizedBox(
+              height: 110,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _submissionScreenshotUrls.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (_, i) {
+                  final url = _submissionScreenshotUrls[i];
+                  return GestureDetector(
+                    onTap: () => _showImageViewer(url),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(
+                        url,
+                        width: 110,
+                        height: 110,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 110,
+                          height: 110,
+                          color: AppColors.surfaceContainer,
+                          alignment: Alignment.center,
+                          child: Icon(Icons.broken_image,
+                              color: AppColors.outline, size: 22),
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.zoom_in,
-                            color: Colors.white, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Tap to view',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
             if (_submission?['contact_info'] is String &&
@@ -1033,65 +976,11 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
               ),
             ],
           ],
-          if (canUpload) ...[
-            const SizedBox(height: 14),
-            Text(
-              'WhatsApp Number or Email',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurface,
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _contactController,
-              keyboardType: TextInputType.emailAddress,
-              enabled: !_isUploading,
-              onChanged: (_) {
-                if (_contactError != null) {
-                  setState(() => _contactError = null);
-                }
-              },
-              decoration: InputDecoration(
-                hintText: 'e.g. 9876543210 or you@email.com',
-                hintStyle: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: AppColors.outline,
-                ),
-                errorText: _contactError,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
-                filled: true,
-                fillColor: AppColors.surfaceContainer,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: AppColors.outlineVariant,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: AppColors.outlineVariant,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: AppColors.primary,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: GestureDetector(
-              onTap: (!canUpload || _isUploading) ? null : _uploadScreenshot,
+              onTap: canUpload ? _openFillForm : null,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1110,35 +999,24 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (_isUploading)
-                      SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      )
-                    else ...[
-                      Icon(
-                        Icons.upload_file,
+                    Icon(
+                      Icons.upload_file,
+                      color: !canUpload
+                          ? AppColors.outline
+                          : AppColors.primary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      status == 'rejected' ? 'Re-upload Screenshots' : 'Fill Form',
+                      style: GoogleFonts.plusJakartaSans(
                         color: !canUpload
-                            ? AppColors.outline
+                            ? AppColors.onSurfaceVariant
                             : AppColors.primary,
-                        size: 18,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        status == 'rejected' ? 'Re-upload' : 'Upload',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: !canUpload
-                              ? AppColors.onSurfaceVariant
-                              : AppColors.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
               ),

@@ -548,14 +548,16 @@ class ApiService {
   Future<Map<String, dynamic>> uploadTaskSubmission({
     required int userId,
     required int offerId,
-    required String imageBase64DataUrl,
+    required List<String> imageBase64DataUrls,
     required String contactInfo,
   }) async {
     final response = await http.post(
       Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submissions'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'image_file': imageBase64DataUrl,
+        'image_files': imageBase64DataUrls,
+        // Backwards-compat with older backends expecting a single image
+        'image_file': imageBase64DataUrls.isNotEmpty ? imageBase64DataUrls.first : null,
         'contact_info': contactInfo,
       }),
     );
