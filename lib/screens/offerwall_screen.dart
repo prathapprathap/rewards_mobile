@@ -48,8 +48,11 @@ class _OfferwallScreenState extends State<OfferwallScreen>
     });
     try {
       final api = ApiService();
+      final userId =
+          Provider.of<UserProvider>(context, listen: false).user?.id;
       // Cache-first: instant render from cache, then refresh in background.
-      await api.getOfferwallOffersCached((offers) {
+      // Passing userId lets the backend hide offers this user already finished.
+      await api.getOfferwallOffersCached(userId: userId, (offers) {
         if (!mounted) return;
         setState(() {
           _offers = offers;
@@ -79,6 +82,8 @@ class _OfferwallScreenState extends State<OfferwallScreen>
     );
     if (mounted) {
       userProvider.refreshUser();
+      // Re-fetch so an offer the user just finished drops off the list.
+      _loadOffers();
     }
   }
 

@@ -194,7 +194,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
           _isOfferCompleted ? 'Reward Received!' : 'Scratch & Win',
@@ -203,8 +203,8 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: _isOfferCompleted
-                ? const LinearGradient(
-                    colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
+                ? LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryContainer],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -379,8 +379,8 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryContainer],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [

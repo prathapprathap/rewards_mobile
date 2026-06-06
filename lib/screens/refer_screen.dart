@@ -115,29 +115,29 @@ class _ReferScreenState extends State<ReferScreen> {
                   ),
 
                   const SizedBox(height: 32),
-                  _buildMissionTitle('THE REFERRAL MISSION'),
+                  _buildMissionTitle('HOW IT WORKS'),
                   const SizedBox(height: 20),
                   _buildMissionStep(
-                    phase: 'PHASE 01',
-                    title: 'DEPLOY INVITE',
+                    phase: 'STEP 01',
+                    title: 'SHARE THE LINK',
                     description:
-                        'SHARE YOUR UNIQUE LINK WITH YOUR SQUAD VIA WHATSAPP OR SOCIALS.',
+                        'SHARE THE LINK TO YOUR FRIENDS AND FAMILY.',
                     icon: Icons.share_outlined,
                   ),
                   const SizedBox(height: 16),
                   _buildMissionStep(
-                    phase: 'PHASE 02',
-                    title: 'SQUAD JOINS',
+                    phase: 'STEP 02',
+                    title: 'USE YOUR CODE',
                     description:
-                        'YOUR FRIENDS JOIN THE PLATFORM USING YOUR LINK AND VERIFY PROFILE.',
+                        'TELL THEM TO USE YOUR REFER CODE WHEN THEY SIGN UP.',
                     icon: Icons.people_outline,
                   ),
                   const SizedBox(height: 16),
                   _buildMissionStep(
-                    phase: 'PHASE 03',
-                    title: '1ST COMPLETION',
+                    phase: 'STEP 03',
+                    title: 'EARN FOR LIFE',
                     description:
-                        'FRIEND COMPLETES THEIR FIRST OFFER. YOU GET REWARDS INSTANTLY!',
+                        'WHEN THE REFERRED USER COMPLETES ANY OFFER, YOU GET THE OFFER AMOUNT — LIFETIME (EXCLUDES SPECIAL OFFERS).',
                     icon: Icons.check_circle_outline,
                   ),
                   const SizedBox(height: 120), // Bottom padding

@@ -169,14 +169,18 @@ class ApiService {
   /// fresh data when the network refresh lands.
   Future<void> getOfferwallOffersCached(
     void Function(List<Offer>) onData, {
+    int? userId,
     Duration ttl = const Duration(minutes: 5),
   }) async {
     await cachedJson(
-      key: 'offerwall_offers',
+      key: userId != null ? 'offerwall_offers_$userId' : 'offerwall_offers',
       ttl: ttl,
       fetch: () async {
         final res = await http.get(
-          Uri.parse('${ApiConstants.baseUrl}/offers/offerwall'),
+          Uri.parse(
+            '${ApiConstants.baseUrl}/offers/offerwall'
+            '${userId != null ? '?userId=$userId' : ''}',
+          ),
         );
         if (res.statusCode != 200) throw Exception('offerwall failed');
         return res.body;

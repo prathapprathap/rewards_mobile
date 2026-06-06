@@ -140,10 +140,10 @@ class _PewardBottomNav extends StatelessWidget {
           Container(
             width: 70,
             height: 70,
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 6),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primary.withValues(alpha: 0.35),
@@ -152,11 +152,36 @@ class _PewardBottomNav extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Center(
-              child: Icon(
-                Icons.auto_awesome_rounded,
-                color: Colors.white,
-                size: 32,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.tertiaryFixed,
+                    AppColors.tertiaryFixedDim,
+                    AppColors.tertiary,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryContainer, AppColors.primary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
               ),
             ),
           ),
