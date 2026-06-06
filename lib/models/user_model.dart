@@ -10,6 +10,7 @@ class User {
   final double walletBalance;
   final double totalEarnings;
   final String? upiId;
+  final String? mobile;
 
   User({
     required this.id,
@@ -23,6 +24,7 @@ class User {
     required this.walletBalance,
     this.totalEarnings = 0.0,
     this.upiId,
+    this.mobile,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,7 @@ class User {
       totalEarnings:
           double.tryParse(json['total_earnings']?.toString() ?? '0') ?? 0.0,
       upiId: json['upi_id'],
+      mobile: json['mobile'],
     );
   }
 
@@ -55,6 +58,7 @@ class User {
       'wallet_balance': walletBalance,
       'total_earnings': totalEarnings,
       'upi_id': upiId,
+      'mobile': mobile,
     };
   }
 }

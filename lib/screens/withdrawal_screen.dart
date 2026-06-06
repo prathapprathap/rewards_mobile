@@ -17,10 +17,20 @@ class WithdrawalScreen extends StatefulWidget {
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
   final _amountController = TextEditingController();
   final _detailsController = TextEditingController();
+  // Structured bank fields (used only when method is "Bank Transfer")
+  final _accountNameController = TextEditingController();
+  final _accountNumberController = TextEditingController();
+  final _ifscController = TextEditingController();
+  final _bankNameController = TextEditingController();
+  final _mobileController = TextEditingController();
   String _selectedMethod = 'UPI';
   bool _isSubmitting = false;
+  // Mobile is collected only the first time; reused for later withdrawals.
+  bool _needsMobile = true;
 
   final List<String> _methods = ['UPI', 'Paytm', 'Bank Transfer'];
+
+  bool get _isBank => _selectedMethod == 'Bank Transfer';
 
   @override
   void initState() {
@@ -29,6 +39,64 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     if (user?.upiId != null) {
       _detailsController.text = user!.upiId!;
     }
+    final savedMobile = user?.mobile?.trim() ?? '';
+    _needsMobile = savedMobile.isEmpty;
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _detailsController.dispose();
+    _accountNameController.dispose();
+    _accountNumberController.dispose();
+    _ifscController.dispose();
+    _bankNameController.dispose();
+    _mobileController.dispose();
+    super.dispose();
+  }
+
+  /// Builds the `details` string sent to the backend. For bank transfers we
+  /// store a structured, parseable string so the admin panel can show the
+  /// account number and IFSC separately.
+  String _buildDetails() {
+    if (_isBank) {
+      final name = _accountNameController.text.trim();
+      final acc = _accountNumberController.text.trim();
+      final ifsc = _ifscController.text.trim().toUpperCase();
+      final bank = _bankNameController.text.trim();
+      final parts = [
+        'Name: $name',
+        'A/C: $acc',
+        'IFSC: $ifsc',
+        if (bank.isNotEmpty) 'Bank: $bank',
+      ];
+      return parts.join(' | ');
+    }
+    return _detailsController.text.trim();
+  }
+
+  /// Returns an error message if the current input is invalid, else null.
+  String? _validateDetails() {
+    if (_isBank) {
+      if (_accountNameController.text.trim().isEmpty) {
+        return 'Please enter the account holder name';
+      }
+      final acc = _accountNumberController.text.trim();
+      if (acc.isEmpty) return 'Please enter the account number';
+      if (acc.length < 6 || !RegExp(r'^\d+$').hasMatch(acc)) {
+        return 'Enter a valid account number';
+      }
+      final ifsc = _ifscController.text.trim().toUpperCase();
+      if (ifsc.isEmpty) return 'Please enter the IFSC code';
+      if (!RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$').hasMatch(ifsc)) {
+        return 'Enter a valid IFSC code (e.g. SBIN0001234)';
+      }
+      return null;
+    }
+    if (_detailsController.text.trim().isEmpty) {
+      return 'Please enter your payout details';
+    }
+    return null;
   }
 
   Future<void> _submitRequest() async {
@@ -37,12 +105,28 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     if (userId == null) return;
 
     final amountStr = _amountController.text.trim();
-    final details = _detailsController.text.trim();
 
-    if (amountStr.isEmpty || details.isEmpty) {
-      CustomToast.show(context, 'Please fill all fields', title: 'Error', isError: true);
+    if (amountStr.isEmpty) {
+      CustomToast.show(context, 'Please enter an amount', title: 'Error', isError: true);
       return;
     }
+
+    final detailsError = _validateDetails();
+    if (detailsError != null) {
+      CustomToast.show(context, detailsError, title: 'Error', isError: true);
+      return;
+    }
+
+    final mobile = _mobileController.text.trim();
+    if (_needsMobile) {
+      if (!RegExp(r'^\d{10}$').hasMatch(mobile)) {
+        CustomToast.show(context, 'Enter a valid 10-digit mobile number',
+            title: 'Error', isError: true);
+        return;
+      }
+    }
+
+    final details = _buildDetails();
 
     final double amount = double.tryParse(amountStr) ?? 0;
     if (amount <= 0) {
@@ -64,10 +148,13 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         amount: amount,
         method: _selectedMethod,
         details: details,
+        mobile: _needsMobile ? mobile : null,
       );
 
-      // Save payout details for future use
-      await api.updatePayoutDetails(userId, details);
+      // Save UPI id for future prefill (skip for bank/Paytm details).
+      if (_selectedMethod == 'UPI') {
+        await api.updatePayoutDetails(userId, details);
+      }
 
       if (mounted) {
         CustomToast.show(
@@ -138,16 +225,49 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 24),
-            _buildTextField(
-              controller: _detailsController,
-              label: 'Payout Details',
-              hint: _selectedMethod == 'UPI' 
-                  ? 'Enter UPI ID (e.g. name@upi)' 
-                  : _selectedMethod == 'Paytm'
-                      ? 'Enter Paytm Mobile Number'
-                      : 'Enter Account No & IFSC',
-              maxLines: 3,
-            ),
+            if (_isBank) ...[
+              _buildTextField(
+                controller: _accountNameController,
+                label: 'Account Holder Name',
+                hint: 'Enter name as per bank',
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _accountNumberController,
+                label: 'Account Number',
+                hint: 'Enter bank account number',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _ifscController,
+                label: 'IFSC Code',
+                hint: 'e.g. SBIN0001234',
+                textCapitalization: TextCapitalization.characters,
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _bankNameController,
+                label: 'Bank Name (optional)',
+                hint: 'e.g. State Bank of India',
+              ),
+            ] else
+              _buildTextField(
+                controller: _detailsController,
+                label: 'Payout Details',
+                hint: _selectedMethod == 'UPI'
+                    ? 'Enter UPI ID (e.g. name@upi)'
+                    : 'Enter Paytm Mobile Number',
+              ),
+            if (_needsMobile) ...[
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _mobileController,
+                label: 'Mobile Number',
+                hint: 'Enter 10-digit mobile number',
+                keyboardType: TextInputType.phone,
+              ),
+            ],
             const SizedBox(height: 48),
             _buildSubmitButton(),
           ],
@@ -232,6 +352,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     required String label,
     required String hint,
     TextInputType keyboardType = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     int maxLines = 1,
   }) {
     return Column(
@@ -249,6 +370,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,

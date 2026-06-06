@@ -633,6 +633,7 @@ class ApiService {
     required double amount,
     required String method,
     required String details,
+    String? mobile,
   }) async {
     try {
       final response = await http.post(
@@ -643,6 +644,7 @@ class ApiService {
           'amount': amount,
           'method': method,
           'details': details,
+          if (mobile != null && mobile.isNotEmpty) 'mobile': mobile,
         }),
       );
 

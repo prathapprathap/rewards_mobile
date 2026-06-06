@@ -20,32 +20,29 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(user),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 32),
-                _buildAvatar(user),
-                const SizedBox(height: 20),
-                _buildName(user),
-                const SizedBox(height: 24),
-                _buildContactInfo(user),
-                const SizedBox(height: 48),
-                _buildSettingsHub(context),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
+      appBar: _buildAppBar(user),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            _buildAvatar(user),
+            const SizedBox(height: 12),
+            _buildName(user),
+            const SizedBox(height: 12),
+            _buildContactInfo(user),
+            const SizedBox(height: 20),
+            // Settings hub fills the remaining space so the page stays static
+            // (no scrolling) on a single screen.
+            Expanded(child: _buildSettingsHub(context)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAppBar(dynamic user) {
-    return SliverAppBar(
-      pinned: true,
+  PreferredSizeWidget _buildAppBar(dynamic user) {
+    return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
       centerTitle: false,
@@ -114,22 +111,22 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildAvatar(dynamic user) {
     return Container(
-      width: 120,
-      height: 120,
+      width: 84,
+      height: 84,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: Colors.white, width: 4),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white, width: 3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(23),
         child: user?.profilePic != null
             ? Image.network(user!.profilePic!, fit: BoxFit.cover)
             : Container(
@@ -137,7 +134,7 @@ class ProfileScreen extends StatelessWidget {
                 child: Icon(
                   Icons.person_rounded,
                   color: AppColors.primary,
-                  size: 60,
+                  size: 44,
                 ),
               ),
       ),
@@ -148,7 +145,7 @@ class ProfileScreen extends StatelessWidget {
     return Text(
       user?.name ?? 'User',
       style: GoogleFonts.plusJakartaSans(
-        fontSize: 28,
+        fontSize: 22,
         fontWeight: FontWeight.w900,
         color: AppColors.primary,
         fontStyle: FontStyle.italic,
@@ -205,9 +202,9 @@ class ProfileScreen extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -221,7 +218,7 @@ class ProfileScreen extends StatelessWidget {
               fontStyle: FontStyle.italic,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildSettingsItem(
             icon: Icons.star_border_rounded,
             iconColor: Colors.orange,
@@ -392,7 +389,7 @@ class ProfileScreen extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
           _buildSettingsItem(
             icon: Icons.logout_rounded,
             iconColor: Colors.red,
