@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'constants/colors.dart';
+import 'constants/app_design.dart';
+import 'widgets/ui/rupi_ui.dart';
 import 'providers/user_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/app_gate_provider.dart';
@@ -93,6 +95,59 @@ class MyApp extends StatelessWidget {
               ),
               textTheme: textTheme,
               scaffoldBackgroundColor: AppColors.background,
+              progressIndicatorTheme: ProgressIndicatorThemeData(
+                color: AppColors.primary,
+                circularTrackColor: AppColors.primaryFixed,
+              ),
+              splashColor: AppColors.primaryFixed.withValues(alpha: 0.4),
+              highlightColor: AppColors.primaryFixed.withValues(alpha: 0.3),
+              dividerTheme: DividerThemeData(
+                color: AppColors.outlineVariant.withValues(alpha: 0.6),
+                thickness: 1,
+              ),
+              dialogTheme: DialogThemeData(
+                backgroundColor: AppColors.surfaceContainerLowest,
+                shape: RoundedRectangleBorder(borderRadius: AppDesign.brLg),
+              ),
+              bottomSheetTheme: BottomSheetThemeData(
+                backgroundColor: AppColors.surfaceContainerLowest,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppColors.onSurface,
+                contentTextStyle: GoogleFonts.inter(
+                    color: Colors.white, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: AppDesign.brMd),
+              ),
+              chipTheme: ChipThemeData(
+                backgroundColor: AppColors.primaryFixed,
+                labelStyle: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700, color: AppColors.primary),
+                shape: StadiumBorder(
+                    side: BorderSide(color: AppColors.primaryFixedDim)),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                filled: true,
+                fillColor: AppColors.surfaceContainerLowest,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                hintStyle: GoogleFonts.inter(color: AppColors.outline),
+                border: OutlineInputBorder(
+                  borderRadius: AppDesign.brMd,
+                  borderSide: BorderSide(color: AppColors.outlineVariant),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: AppDesign.brMd,
+                  borderSide: BorderSide(color: AppColors.outlineVariant),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: AppDesign.brMd,
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                ),
+              ),
               navigationBarTheme: NavigationBarThemeData(
                 backgroundColor: Colors.white.withValues(alpha: 0.92),
                 indicatorColor: AppColors.primary,
@@ -142,10 +197,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Only block on user+settings. Version/maintenance check runs in the
     // background — once it lands, the gate screens take over if needed.
     if (userProvider.isLoading || settingsProvider.isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      );
+      return const _SplashScreen();
     }
 
     // Hard blocks (only enforced once the gate check has resolved).
@@ -181,6 +233,72 @@ class _AuthWrapperState extends State<AuthWrapper> {
             child: _OptionalUpdateBanner(),
           ),
       ],
+    );
+  }
+}
+
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(gradient: AppColors.headerGradient),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: AppDesign.brXl,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                ),
+                child: Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppColors.goldGradient,
+                    boxShadow: AppDesign.floatShadow,
+                  ),
+                  child: const Center(
+                    child: Text('₹',
+                        style: TextStyle(
+                            fontSize: 44,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF7A5300))),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Rupi Rewards',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Play • Earn • Win',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.85),
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 40),
+              const RupiLoader(size: 44),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

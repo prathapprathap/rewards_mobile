@@ -18,7 +18,7 @@ class RewardDetailScreen extends StatelessWidget {
     final bool isCompleted = reward.isCompleted && reward.isScratched;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: AppColors.onSurface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -37,7 +37,7 @@ class RewardDetailScreen extends StatelessWidget {
               child: Icon(
                 isCompleted ? Icons.check : Icons.stars,
                 size: 16,
-                color: isCompleted ? Colors.white : Colors.blue,
+                color: isCompleted ? Colors.white : AppColors.primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -88,7 +88,7 @@ class RewardDetailScreen extends StatelessWidget {
                     ],
                     if (reward.status == RewardStatus.activating) ...[
                       const SizedBox(width: 8),
-                      _buildChip('Activating', Colors.blue.shade900),
+                      _buildChip('Activating', AppColors.secondary),
                     ],
                   ],
                 ),
@@ -253,22 +253,30 @@ class RewardDetailScreen extends StatelessWidget {
       width: double.infinity,
       height: 220,
       decoration: BoxDecoration(
-        color: Colors.pink.shade50,
+        gradient: AppColors.headerGradient,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.card_giftcard, size: 100, color: Colors.pink.shade200),
-            const SizedBox(height: 10),
+            const Icon(Icons.card_giftcard_rounded,
+                size: 96, color: Colors.white),
+            const SizedBox(height: 12),
             Container(
-               padding: const EdgeInsets.all(8),
-               decoration: BoxDecoration(
-                 color: Colors.white,
-                 borderRadius: BorderRadius.circular(8),
-               ),
-               child: const Icon(Icons.currency_rupee, color: Colors.pink, size: 30),
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: AppColors.goldGradient,
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text('₹',
+                    style: TextStyle(
+                        color: Color(0xFF7A5300),
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900)),
+              ),
             )
           ],
         ),
@@ -449,24 +457,24 @@ class RewardDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-        child: ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFAECBFA),
-            foregroundColor: Colors.black,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: AppColors.goldGradient,
+            borderRadius: BorderRadius.circular(28),
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.open_in_new, size: 18),
+              Icon(Icons.open_in_new_rounded, size: 18, color: Color(0xFF5A3D00)),
               SizedBox(width: 8),
               Text(
                 'Redeem Now',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: Color(0xFF5A3D00)),
               ),
             ],
           ),

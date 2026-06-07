@@ -79,7 +79,7 @@ class RewardCard extends StatelessWidget {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.stars, size: 16, color: Colors.blue),
+                          child: Icon(Icons.stars, size: 16, color: AppColors.primary),
                         ),
                       ),
                       // Completed overlay checkmark
@@ -218,23 +218,24 @@ class RewardCard extends StatelessWidget {
   }
 
   Widget _buildBackground() {
-    // Return different backgrounds based on status or type
-    Color bgColor = Colors.blue.shade400;
+    // Brand violet/gold gradient backdrop; success state goes green.
+    Gradient gradient = AppColors.headerGradient;
     if (reward.isCompleted && reward.isScratched) {
-      bgColor = const Color(0xFF2E7D32); // Success green for completed
-    } else if (reward.title.contains('₹5')) {
-      bgColor = Colors.blue.shade300;
-    } else if (reward.subtitle.contains('Nykaa')) {
-      bgColor = Colors.blue.shade100;
-    } else if (reward.subtitle.contains('Boat')) {
-      bgColor = Colors.red.shade900;
+      gradient = const LinearGradient(
+        colors: [Color(0xFF1FB57A), Color(0xFF0F8F5E)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    } else if (reward.status == RewardStatus.rewarded &&
+        reward.hasPartialCompletion) {
+      gradient = AppColors.goldGradient;
     }
-    
+
     return Container(
       width: double.infinity,
-      color: bgColor,
+      decoration: BoxDecoration(gradient: gradient),
       child: Opacity(
-        opacity: 0.1,
+        opacity: 0.12,
         child: CustomPaint(
           painter: PatternPainter(),
         ),

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/wallet_symbol_icon.dart';
+import '../widgets/ui/rupi_ui.dart';
 import 'transaction_history_screen.dart';
 import 'withdrawal_screen.dart';
 
@@ -57,27 +58,31 @@ class _WalletScreenState extends State<WalletScreen> {
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
         color: AppColors.primary,
+        backgroundColor: AppColors.surfaceContainerLowest,
         onRefresh: _fetchTransactions,
         child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
           slivers: [
-            _buildAppBar(user),
+            SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
-                    _buildBalanceCard(user),
-                    const SizedBox(height: 32),
-                    _buildTabs(),
-                    const SizedBox(height: 32),
-                    _buildHistoryHeader(),
-                    const SizedBox(height: 16),
-                    _buildTransactionsList(),
-                    const SizedBox(height: 100),
-                  ],
+              child: Transform.translate(
+                offset: const Offset(0, -44),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBalanceCard(user),
+                      const SizedBox(height: 24),
+                      _buildTabs(),
+                      const SizedBox(height: 22),
+                      _buildHistoryHeader(),
+                      const SizedBox(height: 12),
+                      _buildTransactionsList(),
+                      const SizedBox(height: 110),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -87,69 +92,31 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildAppBar(dynamic user) {
-    return SliverAppBar(
-      pinned: true,
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      centerTitle: false,
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              height: 24,
-              errorBuilder: (c, e, s) =>
-                  Icon(Icons.eco, color: AppColors.primary, size: 24),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'WALLET',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.primary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
-    );
-  }
-
-  Widget _buildWalletPill(dynamic user) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  Widget _buildHeader() {
+    return RupiHeader(
+      height: 150,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const WalletSymbolIcon(size: 20),
-          const SizedBox(width: 8),
           Text(
-            (user?.walletBalance ?? 0.00).toStringAsFixed(2),
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+            'My Wallet',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
             ),
+          ),
+          const Spacer(),
+          RupiIconButton(
+            icon: Icons.receipt_long_rounded,
+            onHeader: true,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    TransactionHistoryScreen(isEarnings: _isEarningsTab),
+              ),
+            ).then((_) => _fetchTransactions()),
           ),
         ],
       ),
@@ -157,82 +124,79 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildBalanceCard(dynamic user) {
-    final balance = user?.walletBalance ?? 3.00;
+    final balance = user?.walletBalance ?? 0.00;
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(35),
+        gradient: AppColors.goldGradient,
+        borderRadius: AppDesign.brXl,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: AppColors.coinGoldDeep.withValues(alpha: 0.4),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
       child: Column(
         children: [
-          Text(
-            'AVAILABLE BALANCE',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              WalletSymbolIcon(size: 48, fallbackColor: AppColors.primary),
-              const SizedBox(width: 12),
+              const Icon(Icons.account_balance_wallet_rounded,
+                  color: Color(0xFF7A5300), size: 18),
+              const SizedBox(width: 6),
               Text(
-                balance.toStringAsFixed(2),
+                'Available Balance',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF7A5300),
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 14),
           Text(
-            '≈ ₹${balance.toStringAsFixed(2)}',
+            '₹${balance.toStringAsFixed(2)}',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+              fontSize: 46,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF4A3200),
+              letterSpacing: -1,
             ),
           ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const WithdrawalScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                elevation: 0,
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WithdrawalScreen()),
+            ).then((_) => _fetchTransactions()),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 17),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A3200),
+                borderRadius: AppDesign.brPillFor(54),
+                boxShadow: AppDesign.softShadow(
+                    color: Colors.black, opacity: 0.2, y: 6, blur: 14),
               ),
-              child: Text(
-                'WITHDRAW',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  letterSpacing: 1,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.south_west_rounded,
+                      color: Colors.white, size: 19),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Withdraw',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -243,27 +207,23 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildTabs() {
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
-        ],
+        color: AppColors.surfaceContainer,
+        borderRadius: AppDesign.brPillFor(56),
       ),
       child: Row(
         children: [
           Expanded(
             child: _buildTabItem(
-              'EARNINGS',
+              'Earnings',
               _isEarningsTab,
               () => setState(() => _isEarningsTab = true),
             ),
           ),
           Expanded(
             child: _buildTabItem(
-              'MY REDEEMS',
+              'My Redeems',
               !_isEarningsTab,
               () => setState(() => _isEarningsTab = false),
             ),
@@ -276,22 +236,21 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildTabItem(String label, bool active, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+      child: AnimatedContainer(
+        duration: AppDesign.fast,
+        padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          color: active ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: active ? AppColors.surfaceContainerLowest : Colors.transparent,
+          borderRadius: AppDesign.brPillFor(46),
+          boxShadow: active ? AppDesign.softShadow(opacity: 0.08, y: 3, blur: 8) : null,
         ),
         child: Center(
           child: Text(
             label,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: active
-                  ? Colors.white
-                  : AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-              letterSpacing: 0.5,
+              color: active ? AppColors.primary : AppColors.onSurfaceVariant,
             ),
           ),
         ),
@@ -300,67 +259,49 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildHistoryHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'HISTORY',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-            letterSpacing: 0.5,
+    return RupiSectionHeader(
+      title: 'Recent Activity',
+      actionLabel: 'View all',
+      onAction: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TransactionHistoryScreen(isEarnings: _isEarningsTab),
           ),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => TransactionHistoryScreen(isEarnings: _isEarningsTab),
-              ),
-            ).then((_) => _fetchTransactions()); // Refresh when coming back
-          },
-          child: Text(
-            'VIEW ALL',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: AppColors.primary,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      ],
+        ).then((_) => _fetchTransactions());
+      },
     );
   }
 
   Widget _buildTransactionsList() {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return const Padding(
+        padding: EdgeInsets.only(top: 40),
+        child: RupiLoader(size: 48),
+      );
     }
 
     final filteredList = _isEarningsTab
         ? _transactions
-              .where((tx) => tx['transaction_type'] != 'withdrawal')
-              .take(5) // Only show latest 5
-              .toList()
+            .where((tx) => tx['transaction_type'] != 'withdrawal')
+            .take(5)
+            .toList()
         : _transactions
-              .where((tx) => tx['transaction_type'] == 'withdrawal')
-              .take(5) // Only show latest 5
-              .toList();
+            .where((tx) => tx['transaction_type'] == 'withdrawal')
+            .take(5)
+            .toList();
 
     if (filteredList.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: Text(
-            _isEarningsTab ? 'No Earnings Yet!' : 'No Redeem History !',
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
-          ),
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: RupiEmptyState(
+          icon: _isEarningsTab
+              ? Icons.savings_rounded
+              : Icons.receipt_long_rounded,
+          title: _isEarningsTab ? 'No earnings yet' : 'No redeems yet',
+          subtitle: _isEarningsTab
+              ? 'Complete tasks and refer friends to start filling your wallet.'
+              : 'Your withdrawal history will show up here.',
         ),
       );
     }
@@ -382,62 +323,64 @@ class _WalletScreenState extends State<WalletScreen> {
     IconData icon;
     switch (type.toLowerCase()) {
       case 'spin':
-        icon = Icons.refresh;
+        icon = Icons.refresh_rounded;
         break;
       case 'referral':
-        icon = Icons.share;
+        icon = Icons.card_giftcard_rounded;
         break;
       case 'promo':
       case 'signup_bonus':
-        icon = Icons.stars;
+        icon = Icons.stars_rounded;
         break;
       case 'refund':
-        icon = Icons.undo;
+        icon = Icons.undo_rounded;
         break;
       case 'withdrawal':
-        icon = Icons.account_balance_wallet;
+        icon = Icons.account_balance_wallet_rounded;
         break;
       default:
-        icon = Icons.card_giftcard;
+        icon = Icons.bolt_rounded;
     }
+
+    final bool positive = amount >= 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: AppDesign.brLg,
+        boxShadow: AppDesign.cardShadow,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(2),
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(16),
+              color: (positive ? AppColors.primary : AppColors.accentPink)
+                  .withValues(alpha: 0.12),
+              borderRadius: AppDesign.brMd,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: AppDesign.brMd,
               child: imageUrl != null && imageUrl.isNotEmpty
                   ? Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) =>
-                          Icon(icon, color: AppColors.primary, size: 28),
+                      errorBuilder: (c, e, s) => Icon(icon,
+                          color: positive
+                              ? AppColors.primary
+                              : AppColors.accentPink,
+                          size: 24),
                     )
-                  : Icon(icon, color: AppColors.primary, size: 28),
+                  : Icon(icon,
+                      color:
+                          positive ? AppColors.primary : AppColors.accentPink,
+                      size: 24),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,18 +391,19 @@ class _WalletScreenState extends State<WalletScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: AppColors.primary,
+                    fontSize: 14.5,
+                    color: AppColors.onSurface,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
                       date,
                       style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.onSurfaceVariant,
                       ),
                     ),
                     if (type == 'withdrawal') ...[
@@ -472,11 +416,11 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           Text(
-            '${amount >= 0 ? '+' : ''}${amount.toStringAsFixed(0)}',
+            '${positive ? '+' : ''}₹${amount.abs().toStringAsFixed(0)}',
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: amount >= 0 ? Colors.green : Colors.red,
+              fontSize: 17,
+              color: positive ? AppColors.success : AppColors.error,
             ),
           ),
         ],
@@ -488,31 +432,17 @@ class _WalletScreenState extends State<WalletScreen> {
     Color color;
     switch (status) {
       case 'pending':
-        color = Colors.orange;
+        color = AppColors.coinGoldDeep;
         break;
       case 'success':
-        color = Colors.green;
+        color = AppColors.success;
         break;
       case 'rejected':
-        color = Colors.red;
+        color = AppColors.error;
         break;
       default:
-        color = Colors.grey;
+        color = AppColors.outline;
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: GoogleFonts.inter(
-          fontSize: 8,
-          fontWeight: FontWeight.w900,
-          color: color,
-        ),
-      ),
-    );
+    return RupiChip(label: status.toUpperCase(), color: color);
   }
 }

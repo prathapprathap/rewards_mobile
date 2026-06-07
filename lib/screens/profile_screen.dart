@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
-import '../widgets/wallet_symbol_icon.dart';
+import '../widgets/ui/rupi_ui.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -20,210 +21,109 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(user),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            _buildAvatar(user),
-            const SizedBox(height: 12),
-            _buildName(user),
-            const SizedBox(height: 12),
-            _buildContactInfo(user),
-            const SizedBox(height: 20),
-            // Settings hub fills the remaining space. Its contents scroll so
-            // every item (incl. LOGOUT) stays reachable on shorter screens.
-            Expanded(child: _buildSettingsHub(context)),
-          ],
-        ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: _buildProfileHeader(user)),
+          SliverToBoxAdapter(
+            child: Transform.translate(
+              offset: const Offset(0, -26),
+              child: _buildSettingsHub(context),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(dynamic user) {
-    return AppBar(
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      centerTitle: false,
-      title: Row(
+  Widget _buildProfileHeader(dynamic user) {
+    return RupiHeader(
+      height: 250,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              height: 24,
-              errorBuilder: (c, e, s) =>
-                  Icon(Icons.eco, color: AppColors.primary, size: 24),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'PROFILE',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.primary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
-    );
-  }
-
-  Widget _buildWalletPill(dynamic user) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const WalletSymbolIcon(size: 20),
-          const SizedBox(width: 8),
-          Text(
-            (user?.walletBalance ?? 0.00).toStringAsFixed(2),
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatar(dynamic user) {
-    return Container(
-      width: 84,
-      height: 84,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(23),
-        child: user?.profilePic != null
-            ? Image.network(user!.profilePic!, fit: BoxFit.cover)
-            : Container(
-                color: AppColors.background,
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.primary,
-                  size: 44,
+          Row(
+            children: [
+              Text(
+                'Profile',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
                 ),
               ),
-      ),
-    );
-  }
-
-  Widget _buildName(dynamic user) {
-    return Text(
-      user?.name ?? 'User',
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 22,
-        fontWeight: FontWeight.w900,
-        color: AppColors.primary,
-        fontStyle: FontStyle.italic,
-      ),
-    );
-  }
-
-  Widget _buildContactInfo(dynamic user) {
-    return Column(
-      children: [
-        if (user?.email != null && user.email.isNotEmpty)
-          _buildInfoPill(
-            Icons.email_outlined,
-            user.email,
+              const Spacer(),
+              RupiBalancePill(
+                amount: (user?.walletBalance ?? 0.00).toStringAsFixed(2),
+              ),
+            ],
           ),
-      ],
-    );
-  }
-
-  Widget _buildInfoPill(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            text,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurfaceVariant,
+          const Spacer(),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              borderRadius: AppDesign.brXl,
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: AppDesign.floatShadow,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(33),
+              child: user?.profilePic != null
+                  ? Image.network(user!.profilePic!, fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => _avatarFallback())
+                  : _avatarFallback(),
             ),
           ),
+          const SizedBox(height: 12),
+          Text(
+            user?.name ?? 'User',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.3,
+            ),
+          ),
+          if (user?.email != null && user.email.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              user.email,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _avatarFallback() => Container(
+        color: AppColors.primaryFixed,
+        child: Icon(Icons.person_rounded, color: AppColors.primary, size: 46),
+      );
 
   Widget _buildSettingsHub(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-      child: SingleChildScrollView(
-        child: Column(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'SETTINGS HUB',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: AppColors.primary,
-              letterSpacing: 1,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const RupiSectionHeader(
+              title: 'Settings', icon: Icons.tune_rounded),
           _buildSettingsItem(
-            icon: Icons.star_border_rounded,
-            iconColor: Colors.orange,
-            label: 'RATE US',
+            icon: Icons.star_rounded,
+            iconColor: AppColors.coinGoldDeep,
+            label: 'Rate Us',
             onTap: () async {
               final settings = Provider.of<SettingsProvider>(
                 context,
@@ -255,11 +155,11 @@ class ProfileScreen extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildSettingsItem(
-            icon: Icons.chat_bubble_outline_rounded,
-            iconColor: Colors.green,
-            label: 'WHATSAPP CHANNEL',
+            icon: Icons.chat_bubble_rounded,
+            iconColor: AppColors.success,
+            label: 'WhatsApp Channel',
             onTap: () async {
               final settings = Provider.of<SettingsProvider>(
                 context,
@@ -291,11 +191,11 @@ class ProfileScreen extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildSettingsItem(
             icon: Icons.telegram_rounded,
-            iconColor: Colors.blue,
-            label: 'JOIN TELEGRAM',
+            iconColor: AppColors.accentBlue,
+            label: 'Join Telegram',
             onTap: () async {
               final settings = Provider.of<SettingsProvider>(
                 context,
@@ -322,12 +222,11 @@ class ProfileScreen extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
-
+          const SizedBox(height: 12),
           _buildSettingsItem(
-            icon: Icons.help_outline_rounded,
-            iconColor: Colors.red,
-            label: 'HELP & SUPPORT',
+            icon: Icons.help_rounded,
+            iconColor: AppColors.accentTeal,
+            label: 'Help & Support',
             onTap: () async {
               final settings = Provider.of<SettingsProvider>(
                 context,
@@ -353,11 +252,11 @@ class ProfileScreen extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildSettingsItem(
-            icon: Icons.privacy_tip_outlined,
-            iconColor: Colors.blueGrey,
-            label: 'PRIVACY POLICY',
+            icon: Icons.privacy_tip_rounded,
+            iconColor: AppColors.secondary,
+            label: 'Privacy Policy',
             onTap: () async {
               final settings = Provider.of<SettingsProvider>(
                 context,
@@ -390,15 +289,15 @@ class ProfileScreen extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildSettingsItem(
             icon: Icons.logout_rounded,
-            iconColor: Colors.red,
-            label: 'LOGOUT',
+            iconColor: AppColors.error,
+            label: 'Logout',
+            isDestructive: true,
             onTap: () => _showLogoutDialog(context),
           ),
         ],
-      ),
       ),
     );
   }
@@ -466,57 +365,39 @@ class ProfileScreen extends StatelessWidget {
     required Color iconColor,
     required String label,
     required VoidCallback onTap,
+    bool isDestructive = false,
   }) {
-    return GestureDetector(
+    return RupiCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: AppDesign.brMd,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: iconColor.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                ),
+            child: Icon(icon, color: iconColor, size: 23),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+                color: isDestructive ? AppColors.error : AppColors.onSurface,
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.primary,
-              size: 24,
-            ),
-          ],
-        ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.outline,
+            size: 22,
+          ),
+        ],
       ),
     );
   }

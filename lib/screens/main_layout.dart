@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import 'home_screen.dart';
 import 'wallet_screen.dart';
 import 'profile_screen.dart';
@@ -26,6 +27,11 @@ class _MainLayoutState extends State<MainLayout> {
     ProfileScreen(),
   ];
 
+  void _go(int index) {
+    HapticFeedback.selectionClick();
+    setState(() => _currentIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -35,169 +41,125 @@ class _MainLayoutState extends State<MainLayout> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: _PewardBottomNav(
+      bottomNavigationBar: _RupiNavBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: _go,
       ),
     );
   }
 }
 
-class _PewardBottomNav extends StatelessWidget {
+/// Fresh floating pill navigation: a detached, rounded glass bar with a pill
+/// indicator behind the active tab and a raised gradient "Earn" action.
+class _RupiNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const _PewardBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
+  const _RupiNavBar({required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 90,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        height: 70,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: AppDesign.brPillFor(70),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.16),
+              blurRadius: 28,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _item(0, Icons.home_rounded, 'Home'),
+            _item(1, Icons.card_giftcard_rounded, 'Refer'),
+            _centerAction(),
+            _item(3, Icons.account_balance_wallet_rounded, 'Wallet'),
+            _item(4, Icons.person_rounded, 'Profile'),
+          ],
+        ),
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.home_outlined, Icons.home, 'HOME'),
-                _buildNavItem(1, Icons.share_outlined, Icons.share, 'REFER'),
-                const SizedBox(width: 60), // Space for FAB
-                _buildNavItem(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'WALLET'),
-                _buildNavItem(4, Icons.person_outline, Icons.person, 'PROFILE'),
+    );
+  }
+
+  Widget _item(int index, IconData icon, String label) {
+    final active = currentIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: AppDesign.med,
+          curve: Curves.easeOut,
+          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          decoration: BoxDecoration(
+            color: active ? AppColors.primaryFixed : Colors.transparent,
+            borderRadius: AppDesign.brPillFor(46),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 22,
+                  color: active ? AppColors.primary : AppColors.outline),
+              if (active) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.clip,
+                    softWrap: false,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
-          Positioned(
-            top: -30,
-            left: MediaQuery.of(context).size.width / 2 - 35,
-            child: _buildFab(),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
-    final bool isActive = currentIndex == index;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isActive ? activeIcon : icon,
-            color: isActive ? AppColors.primary : const Color(0xFF9E9E9E),
-            size: 24,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-              color: isActive ? AppColors.primary : const Color(0xFF9E9E9E),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFab() {
-    final bool isActive = currentIndex == 2;
+  Widget _centerAction() {
+    final active = currentIndex == 2;
     return GestureDetector(
       onTap: () => onTap(2),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.35),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+      child: Container(
+        width: 58,
+        height: 58,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: AppColors.goldGradient,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.coinGoldDeep.withValues(alpha: active ? 0.55 : 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.tertiaryFixed,
-                    AppColors.tertiaryFixedDim,
-                    AppColors.tertiary,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [AppColors.primaryContainer, AppColors.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'EXTRA',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-              color: isActive ? AppColors.primary : const Color(0xFF9E9E9E),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
+          ],
+          border: Border.all(color: Colors.white, width: 3),
+        ),
+        child: const Center(
+          child: Icon(Icons.bolt_rounded, color: Color(0xFF7A5300), size: 28),
+        ),
       ),
     );
   }
 }
-

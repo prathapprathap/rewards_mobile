@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/ui/rupi_ui.dart';
 import '../providers/settings_provider.dart';
 
 class WithdrawalScreen extends StatefulWidget {
@@ -187,16 +189,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        scrolledUnderElevation: 0,
+        leading: BackButton(color: AppColors.onSurface),
         title: Text(
-          'WITHDRAW',
+          'Withdraw',
           style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
-            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: AppColors.onSurface,
           ),
         ),
       ),
@@ -206,17 +206,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildBalanceCard(),
-            const SizedBox(height: 32),
-            Text(
-              'WITHDRAWAL DETAILS',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 28),
+            const RupiSectionHeader(
+                title: 'Withdrawal details', icon: Icons.south_west_rounded),
             _buildMethodSelector(),
             const SizedBox(height: 24),
             _buildTextField(
@@ -288,15 +280,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        gradient: AppColors.goldGradient,
+        borderRadius: AppDesign.brXl,
+        boxShadow: AppDesign.softShadow(
+            color: AppColors.coinGoldDeep, opacity: 0.35, y: 10, blur: 22),
       ),
       child: Column(
         children: [
@@ -305,16 +292,17 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: AppColors.primary,
+              color: const Color(0xFF7A5300),
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             '${settings.currencySymbol}${(user?.walletBalance ?? 0).toStringAsFixed(2)}',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 32,
+              fontSize: 34,
               fontWeight: FontWeight.w900,
-              color: AppColors.primary,
+              color: const Color(0xFF4A3200),
             ),
           ),
         ],
@@ -399,34 +387,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _submitRequest,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          elevation: 0,
-        ),
-        child: _isSubmitting
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-              )
-            : Text(
-                'SUBMIT REQUEST',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  letterSpacing: 1,
-                ),
-              ),
-      ),
+    return RupiButton(
+      label: 'Submit Request',
+      icon: Icons.send_rounded,
+      loading: _isSubmitting,
+      onPressed: _isSubmitting ? null : _submitRequest,
     );
   }
 }

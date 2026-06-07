@@ -408,6 +408,8 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
   // ─── Deactivate Dialog ──────────────────────────────────────────────────
   void _showDeactivateDialog(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);

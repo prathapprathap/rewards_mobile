@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/ui/rupi_ui.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final bool isEarnings;
@@ -88,34 +90,46 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
-        leading: BackButton(color: AppColors.primary),
+        scrolledUnderElevation: 0,
+        leading: BackButton(color: AppColors.onSurface),
         title: Text(
-          widget.isEarnings ? 'EARNINGS HISTORY' : 'REDEEM HISTORY',
+          widget.isEarnings ? 'Earnings History' : 'Redeem History',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
+            fontWeight: FontWeight.w800,
+            color: AppColors.onSurface,
           ),
         ),
       ),
       body: RefreshIndicator(
         onRefresh: _fetchTransactions,
         color: AppColors.primary,
+        backgroundColor: AppColors.surfaceContainerLowest,
         child: _isLoading && _transactions.isEmpty
-            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? RupiLoader.fullscreen(label: 'Loading history…')
             : filteredList.isEmpty
-                ? Center(child: Text('No data found', style: GoogleFonts.inter(color: Colors.grey)))
+                ? RupiEmptyState(
+                    icon: widget.isEarnings
+                        ? Icons.savings_rounded
+                        : Icons.receipt_long_rounded,
+                    title: 'Nothing here yet',
+                    subtitle: widget.isEarnings
+                        ? 'Your earnings will appear here as you complete tasks.'
+                        : 'Your withdrawals will appear here.',
+                  )
                 : ListView.builder(
                     controller: _scrollController,
+                    physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics()),
                     padding: const EdgeInsets.all(20),
                     itemCount: filteredList.length + (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == filteredList.length) {
                         return const Padding(
                           padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: CircularProgressIndicator()),
+                          child: RupiLoader(size: 38),
                         );
                       }
                       return _buildTransactionCard(filteredList[index]);
@@ -130,60 +144,56 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final String description = tx['description'] ?? 'Activity reward';
     final double amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
     final String status = tx['status']?.toString().toLowerCase() ?? 'success';
-    final String date = tx['created_at'] != null 
-        ? tx['created_at'].toString().substring(0, 16).replaceAll('T', ' ') 
+    final String date = tx['created_at'] != null
+        ? tx['created_at'].toString().substring(0, 16).replaceAll('T', ' ')
         : 'Recently';
 
+    final bool positive = amount >= 0;
     IconData icon;
-    Color iconColor = AppColors.primary;
+    Color iconColor = positive ? AppColors.primary : AppColors.accentPink;
 
     switch (type.toLowerCase()) {
       case 'spin':
-        icon = Icons.refresh;
+        icon = Icons.refresh_rounded;
         break;
       case 'referral':
-        icon = Icons.share;
+        icon = Icons.card_giftcard_rounded;
         break;
       case 'promo':
       case 'signup_bonus':
-        icon = Icons.stars;
+        icon = Icons.stars_rounded;
         break;
       case 'withdrawal':
-        icon = Icons.account_balance_wallet;
+        icon = Icons.account_balance_wallet_rounded;
         break;
       case 'refund':
-        icon = Icons.undo;
-        iconColor = Colors.orange;
+        icon = Icons.undo_rounded;
+        iconColor = AppColors.coinGoldDeep;
         break;
       default:
-        icon = Icons.card_giftcard;
+        icon = Icons.bolt_rounded;
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: AppDesign.brLg,
+        boxShadow: AppDesign.cardShadow,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: AppDesign.brMd,
             ),
-            child: Icon(icon, color: iconColor, size: 24),
+            child: Icon(icon, color: iconColor, size: 23),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,18 +204,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: AppColors.primary,
+                    fontSize: 14.5,
+                    color: AppColors.onSurface,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
                       date,
                       style: GoogleFonts.inter(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey,
+                        color: AppColors.onSurfaceVariant,
                       ),
                     ),
                     if (type == 'withdrawal') ...[
@@ -218,11 +229,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
           ),
           Text(
-            '${amount >= 0 ? '+' : ''}${amount.toStringAsFixed(0)}',
+            '${positive ? '+' : ''}₹${amount.abs().toStringAsFixed(0)}',
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: amount >= 0 ? Colors.green : Colors.red,
+              fontSize: 17,
+              color: positive ? AppColors.success : AppColors.error,
             ),
           ),
         ],
@@ -233,25 +244,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget _buildStatusBadge(String status) {
     Color color;
     switch (status) {
-      case 'pending': color = Colors.orange; break;
-      case 'success': color = Colors.green; break;
-      case 'rejected': color = Colors.red; break;
-      default: color = Colors.grey;
+      case 'pending':
+        color = AppColors.coinGoldDeep;
+        break;
+      case 'success':
+        color = AppColors.success;
+        break;
+      case 'rejected':
+        color = AppColors.error;
+        break;
+      default:
+        color = AppColors.outline;
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: GoogleFonts.inter(
-          fontSize: 8,
-          fontWeight: FontWeight.w900,
-          color: color,
-        ),
-      ),
-    );
+    return RupiChip(label: status.toUpperCase(), color: color);
   }
 }

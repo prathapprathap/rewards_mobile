@@ -5,6 +5,7 @@ import '../constants/colors.dart';
 import '../models/offer_model.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/ui/rupi_ui.dart';
 
 class OfferwallScreen extends StatefulWidget {
   const OfferwallScreen({super.key});
@@ -179,71 +180,25 @@ class _OfferwallScreenState extends State<OfferwallScreen>
   }
 
   Widget _buildLoader() {
-    return Center(child: CircularProgressIndicator(color: AppColors.primary));
+    return RupiLoader.fullscreen(label: 'Finding offers…');
   }
 
   Widget _buildError() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.cloud_off_rounded,
-              size: 72,
-              color: AppColors.textTertiary,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 28),
-            ElevatedButton.icon(
-              onPressed: _loadOffers,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return RupiEmptyState(
+      icon: Icons.cloud_off_rounded,
+      title: 'Couldn\'t load offers',
+      subtitle: _errorMessage,
+      actionLabel: 'Try Again',
+      onAction: _loadOffers,
+      tint: AppColors.error,
     );
   }
 
   Widget _buildEmpty() {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inbox_rounded, size: 72, color: AppColors.textTertiary),
-          SizedBox(height: 16),
-          Text(
-            'No offers available right now',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Check back soon for new opportunities!',
-            style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
-          ),
-        ],
-      ),
+    return const RupiEmptyState(
+      icon: Icons.inbox_rounded,
+      title: 'No offers right now',
+      subtitle: 'Check back soon for fresh ways to earn!',
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import 'main_layout.dart';
@@ -35,220 +36,186 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // ── Decorative Background Blobs ─────────────────────────────
-          Positioned(
-            top: -80,
-            right: -60,
-            child: Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -60,
-            left: -40,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppColors.tertiaryFixed.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 120,
-            right: -30,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                color: AppColors.secondaryFixed.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-
-          // ── Content ─────────────────────────────────────────────────
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
-
-                  // Logo mark
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryContainer],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.35),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+      backgroundColor: AppColors.primary,
+      body: Container(
+        decoration: BoxDecoration(gradient: AppColors.headerGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // ── Hero ────────────────────────────────────────────────
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: -30,
+                      right: -30,
+                      child: _bubble(160, Colors.white.withValues(alpha: 0.08)),
                     ),
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Image.asset(
-                          'assets/images/app_icon.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (c, e, s) => Text(
-                            'RR',
+                    Positioned(
+                      bottom: 20,
+                      left: -20,
+                      child: _bubble(100, Colors.white.withValues(alpha: 0.07)),
+                    ),
+                    Positioned(
+                      top: 70,
+                      left: 36,
+                      child: _bubble(
+                          18, AppColors.coinGoldBright.withValues(alpha: 0.6)),
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: AppDesign.brXl,
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.22)),
+                            ),
+                            child: Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                borderRadius: AppDesign.brLg,
+                                boxShadow: AppDesign.floatShadow,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: AppDesign.brLg,
+                                child: Image.asset(
+                                  'assets/images/app_icon.png',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => Container(
+                                    decoration: BoxDecoration(
+                                        gradient: AppColors.goldGradient),
+                                    child: const Center(
+                                      child: Text('₹',
+                                          style: TextStyle(
+                                              fontSize: 46,
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF7A5300))),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 26),
+                          Text(
+                            'Rupi Rewards',
                             style: GoogleFonts.plusJakartaSans(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
                               color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
                               letterSpacing: -1,
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Play games, complete tasks &\nturn your time into real cash 💰',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 14.5,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              height: 1.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Brand name
-                  Text(
-                    'Rupi Rewards',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onSurface,
-                      letterSpacing: -1,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Text(
-                    'Earn rewards with every task.\nTransform effort into real value.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      color: AppColors.onSurfaceVariant,
-                      height: 1.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 52),
-
-                  // ── Sign-In Card ─────────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Get Started',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.onSurface,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Sign in with your Google account to continue',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        const _GoogleSignInButton(),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // ── Feature Pills ─────────────────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _featurePill(Icons.bolt, 'Instant Rewards'),
-                      const SizedBox(width: 10),
-                      _featurePill(Icons.verified_outlined, 'Secure'),
-                      const SizedBox(width: 10),
-                      _featurePill(Icons.stars_outlined, 'Premium'),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  Text(
-                    'By signing in, you agree to our\nTerms & Conditions and Privacy Policy',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: AppColors.outline,
-                      height: 1.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-                ],
+                  ],
+                ),
               ),
-            ),
+
+              // ── Bottom Sheet ────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLowest,
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(36)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _featurePill(Icons.bolt_rounded, 'Instant'),
+                        const SizedBox(width: 8),
+                        _featurePill(Icons.verified_rounded, 'Secure'),
+                        const SizedBox(width: 8),
+                        _featurePill(Icons.workspace_premium_rounded, 'Trusted'),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Let\'s get started',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Sign in with Google — it only takes a second',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const _GoogleSignInButton(),
+                    const SizedBox(height: 18),
+                    Text(
+                      'By continuing you agree to our Terms & Privacy Policy',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: AppColors.outline,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
+  Widget _bubble(double d, Color c) => Container(
+        width: d,
+        height: d,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: c),
+      );
+
   Widget _featurePill(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: AppColors.primaryFixed,
         borderRadius: BorderRadius.circular(99),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: AppColors.primary),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurfaceVariant,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
             ),
           ),
         ],

@@ -5,12 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/settings_provider.dart';
 import '../providers/user_provider.dart';
-import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_toast.dart';
-import '../widgets/wallet_symbol_icon.dart';
+import '../widgets/ui/rupi_ui.dart';
 
 class ReferScreen extends StatefulWidget {
   const ReferScreen({super.key});
@@ -30,11 +30,6 @@ class _ReferScreenState extends State<ReferScreen> {
   void initState() {
     super.initState();
     _fetchStats();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   Future<void> _fetchStats() async {
@@ -61,8 +56,7 @@ class _ReferScreenState extends State<ReferScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
-    final referralCode =
-        user?.referralCode ??
+    final referralCode = user?.referralCode ??
         (user?.id != null ? 'REWARD${user!.id}' : 'T973WC');
     final hasAppliedReferralCode =
         (user?.referredBy?.trim().isNotEmpty ?? false);
@@ -70,77 +64,76 @@ class _ReferScreenState extends State<ReferScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildAppBar(user),
+          SliverToBoxAdapter(child: _buildHeader(user)),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  _buildCenteredText('UNLIMITED REWARDS FOR EVERY NEW USER'),
-                  const SizedBox(height: 24),
-                  _buildReferralCodeCard(context, referralCode),
-                  const SizedBox(height: 20),
-                  if (!hasAppliedReferralCode) ...[
-                    _buildReferralAutoDetectInfo(),
-                    const SizedBox(height: 24),
-                  ] else ...[
-                    _buildReferralVerifiedCard(user!.referredBy!),
-                    const SizedBox(height: 24),
+            child: Transform.translate(
+              offset: const Offset(0, -34),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInviteHero(context, referralCode),
+                    const SizedBox(height: 20),
+                    if (!hasAppliedReferralCode)
+                      _buildReferralAutoDetectInfo()
+                    else
+                      _buildReferralVerifiedCard(user!.referredBy!),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'Referrals',
+                            _stats['total_referrals'].toString(),
+                            Icons.people_alt_rounded,
+                            AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Earnings',
+                            '${settings.currencySymbol}${(_stats['total_commission'] as num).toStringAsFixed(2)}',
+                            Icons.savings_rounded,
+                            AppColors.coinGoldDeep,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                    const RupiSectionHeader(
+                        title: 'How it works',
+                        icon: Icons.auto_awesome_rounded),
+                    _buildMissionStep(
+                      index: 1,
+                      title: 'Share your link',
+                      description:
+                          'Send your invite link to friends and family.',
+                      icon: Icons.share_rounded,
+                      isLast: false,
+                    ),
+                    _buildMissionStep(
+                      index: 2,
+                      title: 'They use your code',
+                      description:
+                          'Your code is applied automatically when they sign up.',
+                      icon: Icons.qr_code_rounded,
+                      isLast: false,
+                    ),
+                    _buildMissionStep(
+                      index: 3,
+                      title: 'Earn for life',
+                      description:
+                          'When your referral completes any offer, you earn the offer amount — for a lifetime (excludes special offers).',
+                      icon: Icons.workspace_premium_rounded,
+                      isLast: true,
+                    ),
+                    const SizedBox(height: 130),
                   ],
-                  const SizedBox(height: 24),
-
-                  // Stats Section
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'REFERRALS',
-                          _stats['total_referrals'].toString(),
-                          Icons.people_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'EARNINGS',
-                          '${settings.currencySymbol}${(_stats['total_commission'] as num).toStringAsFixed(2)}',
-                          Icons.account_balance_wallet_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-                  _buildMissionTitle('HOW IT WORKS'),
-                  const SizedBox(height: 20),
-                  _buildMissionStep(
-                    phase: 'STEP 01',
-                    title: 'SHARE THE LINK',
-                    description:
-                        'SHARE THE LINK TO YOUR FRIENDS AND FAMILY.',
-                    icon: Icons.share_outlined,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMissionStep(
-                    phase: 'STEP 02',
-                    title: 'USE YOUR CODE',
-                    description:
-                        'TELL THEM TO USE YOUR REFER CODE WHEN THEY SIGN UP.',
-                    icon: Icons.people_outline,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMissionStep(
-                    phase: 'STEP 03',
-                    title: 'EARN FOR LIFE',
-                    description:
-                        'WHEN THE REFERRED USER COMPLETES ANY OFFER, YOU GET THE OFFER AMOUNT — LIFETIME (EXCLUDES SPECIAL OFFERS).',
-                    icon: Icons.check_circle_outline,
-                  ),
-                  const SizedBox(height: 120), // Bottom padding
-                ],
+                ),
               ),
             ),
           ),
@@ -151,149 +144,124 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 
-  Widget _buildAppBar(dynamic user) {
-    return SliverAppBar(
-      pinned: true,
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      centerTitle: false,
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              height: 24,
-              errorBuilder: (c, e, s) =>
-                  Icon(Icons.eco, color: AppColors.primary, size: 24),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'REFER & EARN',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.primary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-      actions: [_buildWalletPill(user), const SizedBox(width: 16)],
-    );
-  }
-
-  Widget _buildWalletPill(dynamic user) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  Widget _buildHeader(dynamic user) {
+    return RupiHeader(
+      height: 150,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const WalletSymbolIcon(size: 20),
-          const SizedBox(width: 8),
           Text(
-            (user?.walletBalance ?? 0.00).toStringAsFixed(2),
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+            'Refer & Earn',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
             ),
+          ),
+          const Spacer(),
+          RupiBalancePill(
+            amount: (user?.walletBalance ?? 0.00).toStringAsFixed(2),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCenteredText(String text) {
-    return Center(
-      child: Text(
-        text,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
-          fontWeight: FontWeight.w900,
-          color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReferralCodeCard(BuildContext context, String code) {
+  Widget _buildInviteHero(BuildContext context, String code) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(35),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6D34D6), Color(0xFFFF5FA2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppDesign.brXl,
+        boxShadow: AppDesign.softShadow(
+            color: AppColors.primary, opacity: 0.32, y: 12, blur: 26),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const Icon(Icons.card_giftcard_rounded,
+              color: Colors.white, size: 38),
+          const SizedBox(height: 12),
+          Text(
+            'Invite friends,\nearn unlimited rewards 🎁',
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 8, 8, 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: AppDesign.brMd,
+            ),
+            child: Row(
               children: [
-                Text(
-                  'YOUR CODE',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'YOUR CODE',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onSurfaceVariant,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        code,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  code,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    letterSpacing: 1.5,
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: code));
+                    CustomToast.show(context, 'Code Copied!');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.headerGradient,
+                      borderRadius: AppDesign.brSm,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.copy_rounded,
+                            color: Colors.white, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Copy',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: code));
-              CustomToast.show(context, 'Code Copied!');
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'COPY',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
-              ),
             ),
           ),
         ],
@@ -302,27 +270,19 @@ class _ReferScreenState extends State<ReferScreen> {
   }
 
   Widget _buildReferralAutoDetectInfo() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.primary.withOpacity(0.12)),
-      ),
+    return RupiCard(
+      color: AppColors.coinGoldBright.withValues(alpha: 0.14),
+      padding: const EdgeInsets.all(18),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
+              color: AppColors.coinGoldBright.withValues(alpha: 0.25),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.info_outline_rounded,
-              color: Colors.orange,
-              size: 22,
-            ),
+            child: Icon(Icons.info_rounded,
+                color: AppColors.coinGoldDeep, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -330,21 +290,20 @@ class _ReferScreenState extends State<ReferScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'NO REFERRAL APPLIED',
+                  'No referral applied',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                    letterSpacing: 0.8,
+                    color: AppColors.onSurface,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Referral codes are auto-applied during signup via invite links.',
                   style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -356,27 +315,19 @@ class _ReferScreenState extends State<ReferScreen> {
   }
 
   Widget _buildReferralVerifiedCard(String referredBy) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.primary.withOpacity(0.12)),
-      ),
+    return RupiCard(
+      color: AppColors.successLight,
+      padding: const EdgeInsets.all(18),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.success.withValues(alpha: 0.18),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.verified_rounded,
-              color: AppColors.primary,
-              size: 22,
-            ),
+            child: Icon(Icons.verified_rounded,
+                color: AppColors.success, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -384,21 +335,20 @@ class _ReferScreenState extends State<ReferScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'REFERRAL VERIFIED',
+                  'Referral verified',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                    letterSpacing: 0.8,
+                    color: AppColors.onSurface,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Applied code: $referredBy',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
+                    color: AppColors.success,
                   ),
                 ),
               ],
@@ -409,140 +359,121 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return RupiCard(
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.12),
+              borderRadius: AppDesign.brSm,
             ),
-            child: Icon(icon, color: AppColors.primary, size: 20),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 16),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 14),
           Text(
             value,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 24,
               fontWeight: FontWeight.w900,
-              color: AppColors.primary,
+              color: AppColors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.onSurfaceVariant,
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMissionTitle(String title) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Divider(color: AppColors.onSurfaceVariant.withOpacity(0.1)),
-        ),
-      ],
     );
   }
 
   Widget _buildMissionStep({
-    required String phase,
+    required int index,
     required String title,
     required String description,
     required IconData icon,
+    required bool isLast,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 24),
+          Column(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: AppColors.headerGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: AppDesign.softShadow(opacity: 0.25, y: 4, blur: 10),
+                ),
+                child: Center(
+                  child: Text(
+                    '$index',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2.5,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    color: AppColors.primaryFixedDim,
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  phase,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    letterSpacing: 0.5,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(icon, size: 18, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black,
-                    fontStyle: FontStyle.italic,
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.onSurfaceVariant,
+                      height: 1.45,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                    height: 1.4,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -554,7 +485,6 @@ class _ReferScreenState extends State<ReferScreen> {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final siteName = settings.getString('site_name', 'Rupi Rewards');
     final siteUrl = settings.getString('site_url', '').trim();
-    final apkUrl = settings.getString('apk_download_url', '').trim();
 
     // Build download link with embedded referral code
     // ALWAYS use the backend download endpoint to ensure IP/UA attribution works
@@ -568,9 +498,9 @@ class _ReferScreenState extends State<ReferScreen> {
 
     final shareMessage = downloadLink.isNotEmpty
         ? '🎉 Join $siteName and earn real cash rewards!\n\n'
-              '📲 Download now: $downloadLink\n\n'
-              '🎁 My referral code: $code\n'
-              'Use my code during signup to get bonus rewards!'
+            '📲 Download now: $downloadLink\n\n'
+            '🎁 My referral code: $code\n'
+            'Use my code during signup to get bonus rewards!'
         : '🎉 Join $siteName using my referral code $code and earn unlimited rewards!';
 
     return Padding(
@@ -578,29 +508,10 @@ class _ReferScreenState extends State<ReferScreen> {
       child: Row(
         children: [
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Share.share(shareMessage);
-              },
-              icon: const Icon(Icons.chat_bubble_rounded),
-              label: Text(
-                'SHARE',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  letterSpacing: 1,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 10,
-                shadowColor: AppColors.primary.withValues(alpha: 0.4),
-              ),
+            child: RupiButton(
+              label: 'Share & Invite',
+              icon: Icons.share_rounded,
+              onPressed: () => Share.share(shareMessage),
             ),
           ),
           const SizedBox(width: 12),
@@ -610,10 +521,10 @@ class _ReferScreenState extends State<ReferScreen> {
               CustomToast.show(context, 'Share message copied!');
             },
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(17),
               decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.onSurface,
+                borderRadius: AppDesign.brMd,
               ),
               child: const Icon(Icons.copy_rounded, color: Colors.white),
             ),

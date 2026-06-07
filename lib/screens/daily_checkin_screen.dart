@@ -6,6 +6,7 @@ import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/ui/rupi_ui.dart';
 
 class DailyCheckInScreen extends StatefulWidget {
   const DailyCheckInScreen({super.key});
@@ -127,8 +128,8 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
             children: [
               _buildAppBar(context, user),
               Expanded(
-                child: _isInitialLoading 
-                  ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                child: _isInitialLoading
+                  ? RupiLoader.fullscreen(label: 'Loading check-in…')
                   : SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: Column(
@@ -191,24 +192,22 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            icon: Icon(Icons.arrow_back, color: AppColors.onSurface),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.5),
+              backgroundColor: AppColors.surfaceContainerLowest,
               padding: const EdgeInsets.all(12),
             ),
           ),
           const SizedBox(width: 8),
           Text(
-            'Rewards',
+            'Daily Check-In',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Colors.black87,
+              color: AppColors.onSurface,
             ),
           ),
           const Spacer(),
-          const Icon(Icons.card_giftcard, color: Colors.redAccent, size: 28),
-          const SizedBox(width: 12),
           _buildBalancePill(user),
           const SizedBox(width: 12),
         ],
@@ -234,15 +233,18 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1C40F),
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              gradient: AppColors.goldGradient,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.currency_rupee,
-              color: Colors.white,
-              size: 14,
+            child: const Center(
+              child: Text('₹',
+                  style: TextStyle(
+                      color: Color(0xFF7A5300),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900)),
             ),
           ),
           const SizedBox(width: 8),
@@ -251,7 +253,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w800,
               fontSize: 14,
-              color: Colors.black87,
+              color: AppColors.onSurface,
             ),
           ),
         ],
@@ -357,52 +359,20 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
             ),
           ),
 
-        Container(
-          width: 260,
-          height: 60,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: canClaim
-                ? [
-                    BoxShadow(
-                      color: (isMilestoneDay ? Colors.orange : AppColors.primary)
-                          .withValues(alpha: 0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [],
-          ),
-          child: ElevatedButton(
+        SizedBox(
+          width: 280,
+          child: RupiButton(
+            label: _alreadyCheckedInToday
+                ? 'Checked in ✓'
+                : isMilestoneDay
+                    ? 'Claim 30-Day Reward'
+                    : 'Check in · Day ${_currentDay > 30 ? 30 : _currentDay}',
+            icon: _alreadyCheckedInToday
+                ? Icons.check_circle_rounded
+                : Icons.event_available_rounded,
+            gold: isMilestoneDay,
+            loading: _isLoading,
             onPressed: canClaim ? _handleCheckIn : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _alreadyCheckedInToday
-                  ? Colors.grey.shade300
-                  : isMilestoneDay
-                  ? Colors.orange
-                  : AppColors.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade300,
-              disabledForegroundColor: Colors.grey.shade500,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              elevation: 0,
-            ),
-            child: _isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : Text(
-                    _alreadyCheckedInToday
-                        ? 'CLAIM OFFER'
-                        : isMilestoneDay
-                        ? 'CLAIM 30-DAY REWARD'
-                        : 'CHECK-IN DAY ${_currentDay > 30 ? 30 : _currentDay}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
-                    ),
-                  ),
           ),
         ),
       ],
@@ -465,28 +435,27 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: isDone
-                          ? const LinearGradient(
-                              colors: [Color(0xFFBDBDBD), Color(0xFF9E9E9E)],
-                            )
-                          : LinearGradient(
-                              colors: [
-                                AppColors.primaryFixedDim,
-                                AppColors.primary,
-                              ],
-                            ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isDone ? Colors.grey : AppColors.primary)
-                              .withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      gradient: isDone ? AppColors.goldGradient : null,
+                      color: isDone ? null : AppColors.surfaceContainerLowest,
+                      border: isDone
+                          ? null
+                          : Border.all(color: AppColors.primaryFixedDim),
+                      boxShadow: isDone
+                          ? [
+                              BoxShadow(
+                                color: AppColors.coinGoldDeep
+                                    .withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Icon(
-                      Icons.star,
-                      color: isDone ? Colors.white70 : const Color(0xFFFFD700),
+                      isDone ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: isDone
+                          ? const Color(0xFF7A5300)
+                          : AppColors.primaryFixedDim,
                       size: 24,
                     ),
                   ),
@@ -496,7 +465,7 @@ class _DailyCheckInScreenState extends State<DailyCheckInScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black54,
+                      color: AppColors.onSurfaceVariant,
                     ),
                   ),
                 ],

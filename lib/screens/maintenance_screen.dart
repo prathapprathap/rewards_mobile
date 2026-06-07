@@ -22,10 +22,18 @@ class MaintenanceScreen extends StatelessWidget {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    gradient: AppColors.headerGradient,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
                   ),
-                  child: Icon(Icons.build_rounded, size: 60, color: AppColors.primary),
+                  child: const Icon(Icons.handyman_rounded,
+                      size: 56, color: Colors.white),
                 ),
                 const SizedBox(height: 32),
                 const Text(

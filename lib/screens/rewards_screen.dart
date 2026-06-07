@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/reward_model.dart';
+import '../constants/colors.dart';
 import '../widgets/reward_card.dart';
+import '../widgets/ui/rupi_ui.dart';
 import '../services/api_service.dart';
 import '../providers/user_provider.dart';
 import 'reward_detail_screen.dart';
@@ -111,34 +114,37 @@ class _RewardsScreenState extends State<RewardsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        scrolledUnderElevation: 0,
+        foregroundColor: AppColors.onSurface,
+        title: Text(
+          'My Rewards',
+          style: GoogleFonts.plusJakartaSans(
+              color: AppColors.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.w800),
         ),
-        title: const Text(
-          'Rewards',
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.blue))
+          ? RupiLoader.fullscreen(label: 'Loading rewards…')
           : _rewards.isEmpty
-              ? const Center(child: Text('No rewards available', style: TextStyle(color: Colors.white)))
+              ? RupiEmptyState(
+                  icon: Icons.workspace_premium_rounded,
+                  title: 'No rewards yet',
+                  subtitle:
+                      'Complete tasks and offers to unlock scratch rewards here.',
+                )
               : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: GridView.builder(
+                    physics: const BouncingScrollPhysics(),
                     itemCount: _rewards.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,

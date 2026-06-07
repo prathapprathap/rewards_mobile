@@ -3,10 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/settings_provider.dart';
-import '../services/api_service.dart';
-import '../widgets/app_dialog.dart';
-import '../widgets/wallet_symbol_icon.dart';
+import '../widgets/ui/rupi_ui.dart';
 
 import 'daily_checkin_screen.dart';
 import 'offerwall_screen.dart';
@@ -19,21 +18,30 @@ class ExtraScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Listen to SettingsProvider for dynamic color updates
     Provider.of<SettingsProvider>(context);
+    final user = Provider.of<UserProvider>(context).user;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildAppBar(context),
+          SliverToBoxAdapter(child: _buildHeader(user)),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeroBanner(),
-                  const SizedBox(height: 24),
-                  _buildMenuSection(context),
-                ],
+            child: Transform.translate(
+              offset: const Offset(0, -30),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroBanner(),
+                    const SizedBox(height: 24),
+                    RupiSectionHeader(
+                        title: 'Earn More', icon: Icons.auto_awesome_rounded),
+                    _buildMenuSection(context),
+                    const SizedBox(height: 110),
+                  ],
+                ),
               ),
             ),
           ),
@@ -42,76 +50,23 @@ class ExtraScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      floating: true,
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      centerTitle: false,
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              height: 24,
-              errorBuilder: (c, e, s) =>
-                  Icon(Icons.eco, color: AppColors.primary, size: 24),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'EXTRA',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-      actions: [_buildWalletPill(context), const SizedBox(width: 16)],
-    );
-  }
-
-  Widget _buildWalletPill(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  Widget _buildHeader(dynamic user) {
+    return RupiHeader(
+      height: 140,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const WalletSymbolIcon(size: 20),
-          const SizedBox(width: 8),
           Text(
-            (user?.walletBalance ?? 0.00).toStringAsFixed(2),
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+            'Earn',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
             ),
+          ),
+          const Spacer(),
+          RupiBalancePill(
+            amount: (user?.walletBalance ?? 0.00).toStringAsFixed(2),
           ),
         ],
       ),
@@ -121,40 +76,47 @@ class ExtraScreen extends StatelessWidget {
   Widget _buildHeroBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF5126B0), Color(0xFFFF5FA2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppDesign.brXl,
+        boxShadow: AppDesign.softShadow(
+            color: AppColors.accentPink, opacity: 0.3, y: 10, blur: 22),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'MORE WAYS TO EARN',
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              fontStyle: FontStyle.italic,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'More ways to earn 🎉',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Daily bonuses, offers & secret codes — pick your reward.',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 13,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'DISCOVER EXCLUSIVE BONUSES',
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
+          const SizedBox(width: 10),
+          const Icon(Icons.redeem_rounded, color: Colors.white, size: 52),
         ],
       ),
     );
@@ -164,23 +126,23 @@ class ExtraScreen extends StatelessWidget {
     return Column(
       children: [
         _buildMenuItem(
-          icon: Icons.calendar_today_rounded,
-          iconColor: Colors.blue,
+          icon: Icons.event_available_rounded,
+          iconColor: AppColors.primary,
           title: 'Daily Check-In',
           subtitle: 'Claim your daily attendance reward',
-          onTap: () async {
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const DailyCheckInScreen()),
             );
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         _buildMenuItem(
           icon: Icons.grid_view_rounded,
-          iconColor: Colors.teal,
+          iconColor: AppColors.accentTeal,
           title: 'Offerwalls',
-          subtitle: 'Complete premium offers from wall',
+          subtitle: 'Complete premium offers from the wall',
           onTap: () {
             Navigator.push(
               context,
@@ -188,12 +150,12 @@ class ExtraScreen extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         _buildMenuItem(
-          icon: Icons.confirmation_num_outlined,
-          iconColor: Colors.amber,
+          icon: Icons.confirmation_num_rounded,
+          iconColor: AppColors.coinGoldDeep,
           title: 'Special Code',
-          subtitle: 'Enter secret code to claim rewards',
+          subtitle: 'Enter a secret code to claim rewards',
           onTap: () {
             Navigator.push(
               context,
@@ -212,63 +174,55 @@ class ExtraScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return RupiCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: AppDesign.brMd,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: iconColor, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
-                    ),
+            child: Icon(icon, color: iconColor, size: 26),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onSurface,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    color: AppColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+          ),
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppColors.primaryFixed,
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
+            child: Icon(Icons.chevron_right_rounded,
+                color: AppColors.primary, size: 18),
+          ),
+        ],
       ),
     );
   }

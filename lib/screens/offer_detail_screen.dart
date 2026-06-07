@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'fill_form_screen.dart';
 import 'web_view_screen.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/ui/rupi_ui.dart';
 import '../constants/colors.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
@@ -310,7 +311,7 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     return Scaffold(
       backgroundColor: AppColors.background,
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? RupiLoader.fullscreen(label: 'Loading offer…')
           : _errorMessage != null
           ? _buildErrorView()
           : _buildBody(),

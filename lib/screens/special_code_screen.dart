@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
+import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_toast.dart';
+import '../widgets/ui/rupi_ui.dart';
 
 class SpecialCodeScreen extends StatefulWidget {
   const SpecialCodeScreen({super.key});
@@ -32,7 +34,7 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
     try {
       final api = ApiService();
       final result = await api.redeemPromoCode(userId, code);
-      
+
       if (mounted) {
         CustomToast.show(
           context,
@@ -64,166 +66,131 @@ class _SpecialCodeScreenState extends State<SpecialCodeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
-        leading: BackButton(color: AppColors.primary),
+        scrolledUnderElevation: 0,
+        leading: BackButton(color: AppColors.onSurface),
         title: Text(
-          'SPECIAL CODE',
+          'Special Code',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
-            fontStyle: FontStyle.italic,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.onSurface,
           ),
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const SizedBox(height: 20),
-              // Icon Header
+              const SizedBox(height: 12),
+              // Ticket hero
               Container(
-                height: 180,
-                width: 180,
+                height: 150,
+                width: 150,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                  gradient: AppColors.headerGradient,
+                  borderRadius: AppDesign.brXl,
+                  boxShadow: AppDesign.softShadow(
+                      color: AppColors.primary, opacity: 0.3, y: 12, blur: 24),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(Icons.confirmation_num_rounded,
+                        size: 76, color: Colors.white),
+                    Positioned(
+                      top: 24,
+                      right: 26,
+                      child: Icon(Icons.auto_awesome,
+                          color: AppColors.coinGoldBright, size: 26),
                     ),
                   ],
-                ),
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Icon(Icons.confirmation_num_outlined, size: 80, color: AppColors.primary),
-                      ),
-                      const Positioned(
-                        top: 20,
-                        right: 20,
-                        child: Icon(Icons.star_rounded, color: Colors.amber, size: 24),
-                      ),
-                    ],
-                  ),
                 ),
               ),
-              const SizedBox(height: 40),
-              
-              // Input Card
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(40),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 32),
+              RupiCard(
+                padding: const EdgeInsets.all(26),
                 child: Column(
                   children: [
                     Text(
-                      'SPECIAL CODE',
+                      'Got a secret code? 🎟️',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                        fontStyle: FontStyle.italic,
+                        color: AppColors.onSurface,
+                        letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      'ENTER SECRET CODE BELOW TO UNLOCK REWARDS',
+                      'Enter it below to instantly unlock your reward.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    TextField(
-                      controller: _codeController,
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        hintText: 'Enter Code Here',
-                        hintStyle: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
-                        ),
-                        filled: true,
-                        fillColor: AppColors.background.withValues(alpha: 0.5),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                      ),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _redeemCode,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          elevation: 0,
+                    TextField(
+                      controller: _codeController,
+                      textAlign: TextAlign.center,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        hintText: 'ENTER CODE',
+                        hintStyle: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                          color: AppColors.outline,
                         ),
-                        child: _isLoading 
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : Text(
-                              'CLAIM REWARD →',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                        filled: true,
+                        fillColor: AppColors.primaryFixed.withValues(alpha: 0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: AppDesign.brMd,
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 20),
+                      ),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        letterSpacing: 2,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
+                    RupiButton(
+                      label: 'Claim Reward',
+                      icon: Icons.redeem_rounded,
+                      loading: _isLoading,
+                      onPressed: _isLoading ? null : _redeemCode,
+                    ),
+                    const SizedBox(height: 20),
+                    Divider(color: AppColors.outlineVariant.withValues(alpha: 0.6)),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(9),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
+                            color: AppColors.coinGoldBright.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.stars_rounded, color: Colors.amber, size: 20),
+                          child: Icon(Icons.tips_and_updates_rounded,
+                              color: AppColors.coinGoldDeep, size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'CODES ARE SHARED ON OUR OFFICIAL SOCIAL MEDIA HANDLES. KEEP AN EYE OUT!',
+                            'Codes are shared on our official social media handles — keep an eye out!',
                             style: GoogleFonts.inter(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.onSurfaceVariant,
                               height: 1.4,
                             ),
                           ),
