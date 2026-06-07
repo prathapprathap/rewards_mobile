@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
@@ -266,6 +267,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 label: 'Mobile Number',
                 hint: 'Enter 10-digit mobile number',
                 keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
               ),
             ],
             const SizedBox(height: 48),
@@ -354,6 +359,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     TextInputType keyboardType = TextInputType.text,
     TextCapitalization textCapitalization = TextCapitalization.none,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,6 +378,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
           maxLines: maxLines,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.inter(

@@ -38,7 +38,6 @@ class _ReferScreenState extends State<ReferScreen> {
   }
 
   Future<void> _fetchStats() async {
-    final settings = Provider.of<SettingsProvider>(context); // ✅ FIXED
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userId = userProvider.user?.id;
     if (userId == null) return;
@@ -107,7 +106,7 @@ class _ReferScreenState extends State<ReferScreen> {
                       Expanded(
                         child: _buildStatCard(
                           'EARNINGS',
-                          '${settings.currencySymbol}${_stats['total_commission']}',
+                          '${settings.currencySymbol}${(_stats['total_commission'] as num).toStringAsFixed(2)}',
                           Icons.account_balance_wallet_rounded,
                         ),
                       ),

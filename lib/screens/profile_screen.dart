@@ -32,8 +32,8 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildContactInfo(user),
             const SizedBox(height: 20),
-            // Settings hub fills the remaining space so the page stays static
-            // (no scrolling) on a single screen.
+            // Settings hub fills the remaining space. Its contents scroll so
+            // every item (incl. LOGOUT) stays reachable on shorter screens.
             Expanded(child: _buildSettingsHub(context)),
           ],
         ),
@@ -205,7 +205,8 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -397,6 +398,7 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => _showLogoutDialog(context),
           ),
         ],
+      ),
       ),
     );
   }
