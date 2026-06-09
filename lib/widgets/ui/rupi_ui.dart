@@ -270,9 +270,12 @@ class _BottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final p = Path();
-    p.lineTo(0, size.height - 36);
+    // Gentle, shallow bottom curve: the corners are only lightly trimmed and
+    // the centre dips just a touch. This keeps header content (balance, title)
+    // clear of the curve and lets overlapping cards sit cleanly below it.
+    p.lineTo(0, size.height - 20);
     p.quadraticBezierTo(
-        size.width / 2, size.height + 12, size.width, size.height - 36);
+        size.width / 2, size.height + 6, size.width, size.height - 20);
     p.lineTo(size.width, 0);
     p.close();
     return p;

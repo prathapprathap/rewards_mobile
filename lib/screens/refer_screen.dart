@@ -66,16 +66,22 @@ class _ReferScreenState extends State<ReferScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader(user)),
+          // Header + overlapping content share ONE sliver so the content
+          // paints on top of the header curve (not under it).
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -34),
+            child: Column(
+              children: [
+                _buildHeader(user),
+                Transform.translate(
+                  offset: const Offset(0, -8),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildInviteHero(context, referralCode),
+                    const SizedBox(height: 14),
+                    _buildShareRow(context, referralCode),
                     const SizedBox(height: 20),
                     if (!hasAppliedReferralCode)
                       _buildReferralAutoDetectInfo()
@@ -131,22 +137,22 @@ class _ReferScreenState extends State<ReferScreen> {
                       icon: Icons.workspace_premium_rounded,
                       isLast: true,
                     ),
-                    const SizedBox(height: 130),
+                    const SizedBox(height: 110),
                   ],
                 ),
               ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-      floatingActionButton: _buildWhatsappFab(context, referralCode),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
   Widget _buildHeader(dynamic user) {
     return RupiHeader(
-      height: 150,
+      height: 140,
       child: Row(
         children: [
           Text(
@@ -481,7 +487,7 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 
-  Widget _buildWhatsappFab(BuildContext context, String code) {
+  Widget _buildShareRow(BuildContext context, String code) {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final siteName = settings.getString('site_name', 'Rupi Rewards');
     final siteUrl = settings.getString('site_url', '').trim();
@@ -503,34 +509,32 @@ class _ReferScreenState extends State<ReferScreen> {
             'Use my code during signup to get bonus rewards!'
         : '🎉 Join $siteName using my referral code $code and earn unlimited rewards!';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: RupiButton(
-              label: 'Share & Invite',
-              icon: Icons.share_rounded,
-              onPressed: () => Share.share(shareMessage),
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: RupiButton(
+            label: 'Share & Invite',
+            icon: Icons.share_rounded,
+            onPressed: () =>
+                SharePlus.instance.share(ShareParams(text: shareMessage)),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: shareMessage));
-              CustomToast.show(context, 'Share message copied!');
-            },
-            child: Container(
-              padding: const EdgeInsets.all(17),
-              decoration: BoxDecoration(
-                color: AppColors.onSurface,
-                borderRadius: AppDesign.brMd,
-              ),
-              child: const Icon(Icons.copy_rounded, color: Colors.white),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: shareMessage));
+            CustomToast.show(context, 'Share message copied!');
+          },
+          child: Container(
+            padding: const EdgeInsets.all(17),
+            decoration: BoxDecoration(
+              color: AppColors.onSurface,
+              borderRadius: AppDesign.brMd,
             ),
+            child: const Icon(Icons.copy_rounded, color: Colors.white),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

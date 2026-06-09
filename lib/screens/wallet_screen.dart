@@ -64,26 +64,32 @@ class _WalletScreenState extends State<WalletScreen> {
           physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader()),
+            // Header + overlapping content share ONE sliver so the content
+            // paints on top of the header curve (not under it).
             SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, -44),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBalanceCard(user),
-                      const SizedBox(height: 24),
-                      _buildTabs(),
-                      const SizedBox(height: 22),
-                      _buildHistoryHeader(),
-                      const SizedBox(height: 12),
-                      _buildTransactionsList(),
-                      const SizedBox(height: 110),
-                    ],
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Transform.translate(
+                    offset: const Offset(0, -8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildBalanceCard(user),
+                          const SizedBox(height: 24),
+                          _buildTabs(),
+                          const SizedBox(height: 22),
+                          _buildHistoryHeader(),
+                          const SizedBox(height: 12),
+                          _buildTransactionsList(),
+                          const SizedBox(height: 110),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -94,7 +100,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildHeader() {
     return RupiHeader(
-      height: 150,
+      height: 140,
       child: Row(
         children: [
           Text(

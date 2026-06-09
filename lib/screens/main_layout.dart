@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
 import '../constants/app_design.dart';
 import 'home_screen.dart';
@@ -103,33 +102,15 @@ class _RupiNavBar extends StatelessWidget {
         child: AnimatedContainer(
           duration: AppDesign.med,
           curve: Curves.easeOut,
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: active ? AppColors.primaryFixed : Colors.transparent,
             borderRadius: AppDesign.brPillFor(46),
+            gradient: active ? AppColors.headerGradient : null,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  size: 22,
-                  color: active ? AppColors.primary : AppColors.outline),
-              if (active) ...[
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.clip,
-                    softWrap: false,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          child: Center(
+            child: Icon(icon,
+                size: 22,
+                color: active ? Colors.white : AppColors.outline),
           ),
         ),
       ),

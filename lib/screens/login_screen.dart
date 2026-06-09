@@ -84,7 +84,7 @@ class LoginScreen extends StatelessWidget {
                               child: ClipRRect(
                                 borderRadius: AppDesign.brLg,
                                 child: Image.asset(
-                                  'assets/images/app_icon.png',
+                                  'assets/images/app_icon_clean.png',
                                   fit: BoxFit.cover,
                                   errorBuilder: (c, e, s) => Container(
                                     decoration: BoxDecoration(

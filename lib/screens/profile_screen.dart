@@ -24,11 +24,17 @@ class ProfileScreen extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(child: _buildProfileHeader(user)),
+          // Header + overlapping content share ONE sliver so the content
+          // paints on top of the header curve (not under it).
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -26),
-              child: _buildSettingsHub(context),
+            child: Column(
+              children: [
+                _buildProfileHeader(user),
+                Transform.translate(
+                  offset: const Offset(0, -8),
+                  child: _buildSettingsHub(context),
+                ),
+              ],
             ),
           ),
         ],
@@ -38,8 +44,8 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildProfileHeader(dynamic user) {
     return RupiHeader(
-      height: 250,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+      height: 290,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 44),
       child: Column(
         children: [
           Row(

@@ -194,14 +194,21 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader(user)),
+            // Header and the overlapping quick-actions card live in ONE sliver
+            // so the card paints AFTER (on top of) the header's curve. As
+            // separate slivers the leading header would paint over the card.
             SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, -26),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _buildQuickActions(),
-                ),
+              child: Column(
+                children: [
+                  _buildHeader(user),
+                  Transform.translate(
+                    offset: const Offset(0, -8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildQuickActions(),
+                    ),
+                  ),
+                ],
               ),
             ),
             SliverToBoxAdapter(
@@ -239,7 +246,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ? user!.name.toString().split(' ').first
         : 'there';
     return RupiHeader(
-      height: 210,
+      height: 224,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 42),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -251,9 +259,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                   borderRadius: AppDesign.brSm,
                 ),
-                child: Image.asset('assets/images/app_icon.png',
+                child: Image.asset('assets/images/app_icon_clean.png',
                     height: 26,
                     width: 26,
+                    fit: BoxFit.contain,
                     errorBuilder: (c, e, s) => const Text('₹',
                         style: TextStyle(
                             fontWeight: FontWeight.w900, fontSize: 20))),

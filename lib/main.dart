@@ -250,26 +250,35 @@ class _SplashScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.14),
                   borderRadius: AppDesign.brXl,
                   border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                 ),
-                child: Container(
-                  width: 84,
-                  height: 84,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppColors.goldGradient,
-                    boxShadow: AppDesign.floatShadow,
+                child: ClipRRect(
+                  borderRadius: AppDesign.brLg,
+                  child: SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppColors.goldGradient,
+                        boxShadow: AppDesign.floatShadow,
+                      ),
+                      child: const Center(
+                        child: Text('₹',
+                            style: TextStyle(
+                                fontSize: 44,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF7A5300))),
+                      ),
+                    ),
                   ),
-                  child: const Center(
-                    child: Text('₹',
-                        style: TextStyle(
-                            fontSize: 44,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF7A5300))),
                   ),
                 ),
               ),

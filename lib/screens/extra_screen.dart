@@ -25,24 +25,31 @@ class ExtraScreen extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader(user)),
+          // Header + overlapping content share ONE sliver so the content
+          // paints on top of the header curve (not under it).
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -30),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeroBanner(),
-                    const SizedBox(height: 24),
-                    RupiSectionHeader(
-                        title: 'Earn More', icon: Icons.auto_awesome_rounded),
-                    _buildMenuSection(context),
-                    const SizedBox(height: 110),
-                  ],
+            child: Column(
+              children: [
+                _buildHeader(user),
+                Transform.translate(
+                  offset: const Offset(0, -8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeroBanner(),
+                        const SizedBox(height: 24),
+                        RupiSectionHeader(
+                            title: 'Earn More',
+                            icon: Icons.auto_awesome_rounded),
+                        _buildMenuSection(context),
+                        const SizedBox(height: 110),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
