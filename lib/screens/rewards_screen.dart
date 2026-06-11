@@ -1,115 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import '../models/reward_model.dart';
 import '../constants/colors.dart';
-import '../widgets/reward_card.dart';
-import '../widgets/ui/rupi_ui.dart';
-import '../services/api_service.dart';
-import '../providers/user_provider.dart';
-import 'reward_detail_screen.dart';
 
-class RewardsScreen extends StatefulWidget {
+class RewardsScreen extends StatelessWidget {
   const RewardsScreen({super.key});
-
-  @override
-  State<RewardsScreen> createState() => _RewardsScreenState();
-}
-
-class _RewardsScreenState extends State<RewardsScreen> {
-  List<Reward> _rewards = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchRewards();
-  }
-
-  Future<void> _fetchRewards() async {
-    try {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final userId = userProvider.user?.id;
-      if (userId == null) return;
-
-      final api = ApiService();
-      // Cache-first user offers — fires up to twice (cache, then refresh).
-      await api.getUserOffersCached(userId, (offers) {
-        if (!mounted) return;
-        setState(() {
-          _rewards = offers.map((offer) {
-            final bool isScratched = offer['is_scratched'] == true || offer['is_scratched'] == 1;
-            final bool isCompleted = offer['is_completed'] == true || offer['is_completed'] == 1;
-            final bool hasPartialCompletion = offer['has_partial_completion'] == true || offer['has_partial_completion'] == 1;
-            final int completedSteps = (offer['completed_steps'] as num?)?.toInt() ?? 0;
-            final int totalSteps = (offer['total_steps'] as num?)?.toInt() ?? 0;
-            final double earnedAmount = double.tryParse(offer['earned_amount']?.toString() ?? '0') ?? 0.0;
-            final List<Map<String, dynamic>> completedEvents = (offer['completed_events'] as List<dynamic>?)
-                ?.map((e) => Map<String, dynamic>.from(e as Map))
-                .toList() ?? [];
-
-            RewardStatus status;
-            if (isCompleted && isScratched) {
-              status = RewardStatus.completed;
-            } else if (hasPartialCompletion && isScratched) {
-              status = RewardStatus.rewarded;
-            } else if (isScratched) {
-              status = RewardStatus.rewarded;
-            } else {
-              status = RewardStatus.isNew;
-            }
-
-            return Reward(
-              id: offer['id'].toString(),
-              offerId: offer['id'],
-              title: offer['heading'] ?? offer['offer_name'] ?? 'Reward',
-              subtitle: offer['offer_name'] ?? '',
-              rewardAmount: 'Earn up to ₹${offer['amount'] ?? 0}',
-              status: status,
-              isScratched: isScratched,
-              imageUrl: offer['image_url'],
-              isCompleted: isCompleted,
-              hasPartialCompletion: hasPartialCompletion,
-              completedSteps: completedSteps,
-              totalSteps: totalSteps,
-              earnedAmount: earnedAmount,
-              completedEvents: completedEvents,
-              sideLabel: offer['side_label']?.toString(),
-              sideLabelColor: offer['side_label_color']?.toString(),
-              details: [
-                'Offer: ${offer['offer_name']}',
-                'Amount: ₹${offer['amount']}',
-                if (isCompleted)
-                  'Status: ✅ Completed - Earned ₹${earnedAmount.toStringAsFixed(2)}'
-                else if (hasPartialCompletion)
-                  'Status: 🔄 In Progress ($completedSteps/$totalSteps steps)'
-                else
-                  'Status: ${offer['status']}',
-              ],
-              terms: 'Standard terms and conditions apply.',
-            );
-          }).toList();
-          _isLoading = false;
-        });
-      });
-    } catch (e) {
-      print('Error fetching rewards: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _handleRewardTap(Reward reward) {
-    _openFullDetails(reward);
-  }
-
-  void _openFullDetails(Reward reward) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RewardDetailScreen(reward: reward),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,36 +22,51 @@ class _RewardsScreenState extends State<RewardsScreen> {
               fontWeight: FontWeight.w800),
         ),
       ),
-      body: _isLoading
-          ? RupiLoader.fullscreen(label: 'Loading rewards…')
-          : _rewards.isEmpty
-              ? RupiEmptyState(
-                  icon: Icons.workspace_premium_rounded,
-                  title: 'No rewards yet',
-                  subtitle:
-                      'Complete tasks and offers to unlock scratch rewards here.',
-                )
-              : Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: GridView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: _rewards.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.75,
-                    ),
-                    itemBuilder: (context, index) {
-                      return RewardCard(
-                        reward: _rewards[index],
-                        onTap: () => _handleRewardTap(_rewards[index]),
-                      );
-                    },
-                  ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(
+                  Icons.workspace_premium_rounded,
+                  size: 56,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Coming Soon',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.onSurface,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "We're working on something exciting.\nCheck back soon for new rewards!",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

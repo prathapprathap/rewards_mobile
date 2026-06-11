@@ -702,26 +702,6 @@ class ApiService {
     }
   }
 
-  // ── In-app notifications ───────────────────────────────────────────────────
-
-  Future<List<dynamic>> getUserNotifications(int userId) async {
-    final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/users/$userId/notifications'),
-    );
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as List<dynamic>;
-    }
-    throw Exception('Failed to load notifications');
-  }
-
-  Future<void> markNotificationRead(int userId, int notificationId) async {
-    try {
-      await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/notifications/$notificationId/read'),
-      );
-    } catch (_) {}
-  }
-
   /// Request account deletion — sends a request to admin for review.
   /// [note] is an optional reason supplied by the user.
   Future<Map<String, dynamic>> requestAccountDeletion(

@@ -71,7 +71,7 @@ class _ReferScreenState extends State<ReferScreen> {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                _buildHeader(user),
+                _buildHeader(context, user),
                 Transform.translate(
                   offset: const Offset(0, -8),
               child: Padding(
@@ -150,11 +150,23 @@ class _ReferScreenState extends State<ReferScreen> {
     );
   }
 
-  Widget _buildHeader(dynamic user) {
+  Widget _buildHeader(BuildContext context, dynamic user) {
+    final canGoBack = Navigator.of(context).canPop();
     return RupiHeader(
       height: 140,
       child: Row(
         children: [
+          if (canGoBack) ...[
+            GestureDetector(
+              onTap: () => Navigator.of(context).maybePop(),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.arrow_back_rounded,
+                    color: Colors.white, size: 26),
+              ),
+            ),
+          ],
           Text(
             'Refer & Earn',
             style: GoogleFonts.plusJakartaSans(

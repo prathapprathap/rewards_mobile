@@ -12,7 +12,6 @@ import 'offerwall_screen.dart';
 import 'refer_screen.dart';
 import 'rewards_screen.dart';
 import 'transaction_history_screen.dart';
-import 'notifications_screen.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/ui/rupi_ui.dart';
 import '../widgets/ribbon_badge.dart';
@@ -278,15 +277,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const Spacer(),
-              RupiIconButton(
-                icon: Icons.notifications_rounded,
-                onHeader: true,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const NotificationsScreen()),
-                ),
-              ),
             ],
           ),
           const Spacer(),
