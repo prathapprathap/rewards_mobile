@@ -31,7 +31,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   // Mobile is collected only the first time; reused for later withdrawals.
   bool _needsMobile = true;
 
-  final List<String> _methods = ['UPI', 'Paytm', 'Bank Transfer'];
+  final List<String> _methods = ['UPI', 'Paytm'];
 
   bool get _isBank => _selectedMethod == 'Bank Transfer';
 
