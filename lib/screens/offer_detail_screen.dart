@@ -556,13 +556,22 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
 
   // ─── Steps Section ────────────────────────────────────────────────────────
 
-  Widget _buildStepsSection(List<dynamic> steps) {
+  Widget _buildStepsSection(List<Map<String, dynamic>> steps) {
     final resolvedSteps = steps.isNotEmpty
         ? steps
-        : [
-            "Click 'Start Offer' to open the partner page.",
-            'Complete the required action for this offer.',
-            'Receive your cash reward after successful verification.',
+        : <Map<String, dynamic>>[
+            {
+              'title': 'Complete the required action for this offer.',
+              'description': '',
+              'amount': null,
+              'currencySymbol': '',
+            },
+            {
+              'title': 'Receive your cash reward after successful verification.',
+              'description': '',
+              'amount': null,
+              'currencySymbol': '',
+            },
           ];
 
     return Column(
@@ -571,10 +580,14 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
         _buildSectionHeader(Icons.list_alt, 'Steps to Earn'),
         const SizedBox(height: 20),
         ...resolvedSteps.asMap().entries.map((entry) {
+          final step = entry.value;
           final isLast = entry.key == resolvedSteps.length - 1;
           return _buildStep(
             number: entry.key + 1,
-            text: entry.value.toString(),
+            title: step['title']?.toString() ?? '',
+            description: step['description']?.toString() ?? '',
+            amount: step['amount'] as double?,
+            currencySymbol: step['currencySymbol']?.toString() ?? '',
             isFirst: entry.key == 0,
             isLast: isLast,
           );
@@ -583,31 +596,46 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
     );
   }
 
-  List<String> _resolveSteps(Map<String, dynamic> offer) {
-    List<String> finalSteps = [];
+  /// Resolves the list of steps to render. Each step is a map with:
+  /// `title`, `description`, `amount` (nullable double) and `currencySymbol`.
+  /// Per-step amounts are sourced from offer events' `points`.
+  List<Map<String, dynamic>> _resolveSteps(Map<String, dynamic> offer) {
+    final List<Map<String, dynamic>> finalSteps = [];
 
-    // 1. Process explicit steps
+    // 1. Process explicit steps (plain strings, optional "title|desc" format)
     final rawSteps = offer['steps'] as List<dynamic>?;
     if (rawSteps != null && rawSteps.isNotEmpty) {
-      finalSteps = rawSteps
-          .map((step) => _normalizeStepText(step))
-          .where((step) => step.isNotEmpty)
-          .toList();
+      for (final step in rawSteps) {
+        final normalized = _normalizeStepText(step);
+        if (normalized.isEmpty) continue;
+        final parts = normalized.split('|');
+        finalSteps.add({
+          'title': parts[0].trim(),
+          'description': parts.length > 1 ? parts.sublist(1).join('|').trim() : '',
+          'amount': null,
+          'currencySymbol': '',
+        });
+      }
     }
 
-    // 2. Process events if no explicit steps (or complement them)
+    // 2. Process events if no explicit steps — preserve per-step amount.
     if (finalSteps.isEmpty) {
       final rawEvents = offer['events'] as List<dynamic>?;
       if (rawEvents != null && rawEvents.isNotEmpty) {
-        finalSteps = rawEvents.map((event) {
-          if (event is Map) {
-            final name = _normalizeStepText(event['event_name']);
-            final desc = event['description']?.toString().trim() ?? 
-                         event['event_description']?.toString().trim() ?? '';
-            return desc.isNotEmpty ? "$name|$desc" : name;
-          }
-          return '';
-        }).where((s) => s.isNotEmpty).toList();
+        for (final event in rawEvents) {
+          if (event is! Map) continue;
+          final name = _normalizeStepText(event['event_name']);
+          if (name.isEmpty) continue;
+          final desc = event['description']?.toString().trim().isNotEmpty == true
+              ? event['description'].toString().trim()
+              : event['event_description']?.toString().trim() ?? '';
+          finalSteps.add({
+            'title': name,
+            'description': desc,
+            'amount': double.tryParse('${event['points'] ?? ''}'),
+            'currencySymbol': _currencySymbolFor(event['currency_type']?.toString()),
+          });
+        }
       }
     }
 
@@ -623,28 +651,36 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
           final match = stepPattern.firstMatch(clean);
           if (match != null) {
             final content = match.group(2)?.trim() ?? '';
-            if (content.isNotEmpty) finalSteps.add(content);
+            if (content.isNotEmpty) {
+              finalSteps.add({'title': content, 'description': '', 'amount': null, 'currencySymbol': ''});
+            }
           } else if (clean.length > 5 && clean.length < 100) {
-            finalSteps.add(clean);
+            finalSteps.add({'title': clean, 'description': '', 'amount': null, 'currencySymbol': ''});
           }
         }
       }
     }
 
-    // 4. Ensure "Start Mission" and "Verification" are added if we have steps
-    if (finalSteps.isNotEmpty) {
-      // Don't duplicate "Start Mission" if already present
-      if (!finalSteps.any((s) => s.toLowerCase().contains("start mission"))) {
-        finalSteps.insert(0, "Start Mission|Click 'Start Offer' to open the partner page.");
-      }
-      
-      // Don't duplicate "Verification" if already present
-      if (!finalSteps.any((s) => s.toLowerCase().contains("verification"))) {
-        finalSteps.add("Verification|Reward will be credited after successful verification.");
-      }
-    }
-
     return finalSteps;
+  }
+
+  /// Maps a currency type to its display symbol (mirrors [Offer.currencySymbol]).
+  String _currencySymbolFor(String? type) {
+    switch (type) {
+      case 'coins':
+        return '🪙';
+      case 'gems':
+        return '💎';
+      default:
+        return '₹';
+    }
+  }
+
+  /// Formats a reward amount, dropping the decimal when it is a whole number.
+  String _formatAmount(double value) {
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
   }
 
   bool _isParsedAsSteps(String description) {
@@ -689,15 +725,13 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
 
   Widget _buildStep({
     required int number,
-    required String text,
+    required String title,
+    required String description,
+    required double? amount,
+    required String currencySymbol,
     required bool isFirst,
     required bool isLast,
   }) {
-    // Split combined text/description if present
-    final parts = text.split('|');
-    final title = parts[0].trim();
-    final description = parts.length > 1 ? parts[1].trim() : '';
-
     return Stack(
       children: [
         if (!isLast)
@@ -768,14 +802,44 @@ final safeUrl = trackingUrl?.startsWith('http://') == true
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onSurface,
-                        letterSpacing: -0.2,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                        if (amount != null) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.35),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Text(
+                              '$currencySymbol${_formatAmount(amount)}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     if (description.isNotEmpty) ...[
                       const SizedBox(height: 8),

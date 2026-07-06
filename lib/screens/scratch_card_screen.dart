@@ -518,7 +518,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen>
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '+₹${earned.toStringAsFixed(0)}',
+                              '+₹${earned.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 color: AppColors.success,
                                 fontSize: 13,

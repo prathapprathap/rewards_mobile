@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
+import '../constants/api_constants.dart';
 import '../constants/colors.dart';
 import '../constants/app_design.dart';
 import '../providers/settings_provider.dart';
@@ -25,11 +27,24 @@ class _ReferScreenState extends State<ReferScreen> {
     'successful_referrals': 0,
     'total_commission': 0.0,
   };
+  String _packageName = 'com.reward.server';
 
   @override
   void initState() {
     super.initState();
     _fetchStats();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _packageName = info.packageName;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchStats() async {
@@ -502,16 +517,28 @@ class _ReferScreenState extends State<ReferScreen> {
   Widget _buildShareRow(BuildContext context, String code) {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final siteName = settings.getString('site_name', 'Rupi Rewards');
-    final siteUrl = settings.getString('site_url', '').trim();
-
-    // Build download link with embedded referral code
-    // ALWAYS use the backend download endpoint to ensure IP/UA attribution works
+    // Build the download link with the referral code embedded.
+    // - PROD: a compile-time SITE_URL (--dart-define=SITE_URL=https://rupirewards.xyz)
+    //   points at the static landing site, so we share `<site>/?ref=CODE`.
+    // - STAGING: SITE_URL is unset, so we fall back to the admin `site_url`
+    //   setting + backend /api/download flow on Render (keeps IP/UA attribution).
     String downloadLink = '';
-    if (siteUrl.isNotEmpty) {
-      final base = siteUrl.endsWith('/')
-          ? siteUrl.substring(0, siteUrl.length - 1)
-          : siteUrl;
-      downloadLink = '$base/api/download/$code';
+    final compileSite = ApiConstants.siteUrl.trim();
+    if (compileSite.isNotEmpty) {
+      final base = compileSite.endsWith('/')
+          ? compileSite.substring(0, compileSite.length - 1)
+          : compileSite;
+      downloadLink = '$base/?ref=$code';
+    } else {
+      final siteUrl = settings.getString('site_url', '').trim();
+      if (siteUrl.isNotEmpty) {
+        final base = siteUrl.endsWith('/')
+            ? siteUrl.substring(0, siteUrl.length - 1)
+            : siteUrl;
+        downloadLink = '$base/api/download/$code';
+      } else {
+        downloadLink = 'https://play.google.com/store/apps/details?id=$_packageName&referrer=$code';
+      }
     }
 
     final shareMessage = downloadLink.isNotEmpty

@@ -31,7 +31,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   // Mobile is collected only the first time; reused for later withdrawals.
   bool _needsMobile = true;
 
-  final List<String> _methods = ['UPI', 'Paytm'];
+  final List<String> _methods = [];
 
   bool get _isBank => _selectedMethod == 'Bank Transfer';
 
@@ -44,6 +44,23 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     }
     final savedMobile = user?.mobile?.trim() ?? '';
     _needsMobile = savedMobile.isEmpty;
+
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final upiEnabled = settings.getString('withdraw_method_upi', 'On') == 'On';
+    final bankEnabled = settings.getString('withdraw_method_bank', 'On') == 'On';
+
+    if (upiEnabled) {
+      _methods.add('UPI');
+    }
+    if (bankEnabled) {
+      _methods.add('Bank Transfer');
+    }
+    if (_methods.isEmpty) {
+      _methods.add('UPI');
+    }
+    if (!_methods.contains(_selectedMethod)) {
+      _selectedMethod = _methods.first;
+    }
   }
 
   @override
@@ -247,7 +264,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             ] else
               _buildTextField(
                 controller: _detailsController,
-                label: 'Payout Details',
+                label: _selectedMethod == 'UPI' ? 'UPI ID' : 'Payout Details',
                 hint: _selectedMethod == 'UPI'
                     ? 'Enter UPI ID (e.g. name@upi)'
                     : 'Enter Paytm Mobile Number',

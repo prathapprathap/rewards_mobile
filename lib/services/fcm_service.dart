@@ -27,11 +27,17 @@ class FcmService {
     if (_initialized) return;
     _initialized = true;
 
+    // Permissions (iOS + Android 13+). Token retrieval works on Android even
+    // if this is denied, so never let a failure here block registration.
     try {
-      // Permissions (iOS + Android 13+)
       await _messaging.requestPermission(alert: true, badge: true, sound: true);
+    } catch (e) {
+      debugPrint('FcmService permission error: $e');
+    }
 
-      // Local notifications setup (foreground display)
+    // Local notifications setup (foreground display). Isolated so a failure
+    // here does not skip token registration below.
+    try {
       const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosInit = DarwinInitializationSettings();
       await _localNotifications.initialize(
@@ -65,19 +71,25 @@ class FcmService {
           payload: message.data['action_url'] ?? '',
         );
       });
+    } catch (e) {
+      debugPrint('FcmService local-notifications error: $e');
+    }
 
-      // Token registration
-      if (userId != null) {
+    // Token registration — the critical path. Kept independent so the above
+    // failures can never prevent the device token from reaching the backend.
+    if (userId != null) {
+      try {
         final token = await _messaging.getToken();
+        debugPrint('FcmService token: ${token == null ? "null" : "${token.substring(0, 12)}…"}');
         if (token != null) {
           await ApiService().registerFcmToken(userId, token);
         }
         _messaging.onTokenRefresh.listen((newToken) {
           ApiService().registerFcmToken(userId, newToken);
         });
+      } catch (e) {
+        debugPrint('FcmService token registration error: $e');
       }
-    } catch (e) {
-      debugPrint('FcmService init error: $e');
     }
   }
 }

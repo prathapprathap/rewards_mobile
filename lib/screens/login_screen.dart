@@ -11,15 +11,17 @@ import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import 'main_layout.dart';
 import '../widgets/custom_toast.dart';
+import 'package:android_play_install_referrer/android_play_install_referrer.dart';
 
 /// Tries to extract a referral code from a free-text string.
-/// Matches: "code: ABC123", "ref=ABC123", or a 6–10 char alnum token
-/// inside a known share-message phrase.
+/// Matches: "referral code: ABC123", "?ref=ABC123", or
+/// "/api/download/ABC123" in a copied invite/download link.
 String? extractReferralCode(String? raw) {
   if (raw == null || raw.isEmpty) return null;
   final text = raw.toString();
   final patterns = <RegExp>[
     RegExp(r'referral code[:\s]+([A-Z0-9]{4,12})', caseSensitive: false),
+    RegExp(r'[?&](?:ref|referral|code)=([A-Z0-9]{4,12})', caseSensitive: false),
     RegExp(r'\bref(?:erral)?[=:]\s*([A-Z0-9]{4,12})', caseSensitive: false),
     RegExp(r'/api/download/([A-Z0-9]{4,12})', caseSensitive: false),
   ];
@@ -244,19 +246,31 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
   void initState() {
     super.initState();
     _initializeGoogleSignIn();
-    _tryAutoDetectReferral();
+    _tryDetectPlayReferrer();
   }
 
-  /// Silently scans the clipboard for a referral code on launch. The code
-  /// is captured in memory and passed to the login call — no UI shown.
-  Future<void> _tryAutoDetectReferral() async {
+  /// Detects the installation referrer from the Google Play Store (e.g. if the user installed
+  /// the app from a referral link). This is 100% compliant with Google Play Console policies.
+  Future<void> _tryDetectPlayReferrer() async {
     try {
-      final data = await Clipboard.getData(Clipboard.kTextPlain);
-      final code = extractReferralCode(data?.text);
-      if (code != null && mounted) {
-        _autoDetectedCode = code;
+      final details = await AndroidPlayInstallReferrer.installReferrer;
+      final referrer = details.installReferrer;
+      if (referrer != null && referrer.isNotEmpty) {
+        String? code = extractReferralCode(referrer);
+        if (code == null) {
+          final clean = referrer.trim().toUpperCase();
+          if (RegExp(r'^[A-Z0-9]{4,12}$').hasMatch(clean)) {
+            code = clean;
+          }
+        }
+        if (code != null && mounted) {
+          _autoDetectedCode = code;
+          debugPrint('Detected Google Play Referral Code: $code');
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error detecting Play Install Referrer: $e');
+    }
   }
 
   @override

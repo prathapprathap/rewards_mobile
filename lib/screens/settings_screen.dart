@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
 import '../providers/settings_provider.dart';
 import '../providers/user_provider.dart';
@@ -140,7 +142,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSectionHeader(
                       icon: Icons.help_outline, label: 'Assistance'),
                   const SizedBox(height: 12),
-                  _buildSupportCard(),
+                  _buildSupportCard(context),
 
                   const SizedBox(height: 12),
                   _buildSettingsTile(
@@ -175,14 +177,20 @@ class SettingsScreen extends StatelessWidget {
                   // ),
                   const SizedBox(height: 24),
                   Center(
-                    child: Text(
-                      '$siteName v2.4.1 · PLATINUM TIER',
-                      style: GoogleFonts.inter(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.outlineVariant,
-                        letterSpacing: 1.4,
-                      ),
+                    child: FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        final version = snapshot.data?.version ?? '1.0.0';
+                        return Text(
+                          '$siteName v$version · PLATINUM TIER',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.outlineVariant,
+                            letterSpacing: 1.4,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -328,7 +336,7 @@ class SettingsScreen extends StatelessWidget {
 
   // ─── Support Card ─────────────────────────────────────────────────────────
 
-  Widget _buildSupportCard() {
+  Widget _buildSupportCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -362,19 +370,54 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    'Contact Support',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                GestureDetector(
+                  onTap: () async {
+                    final settings = Provider.of<SettingsProvider>(
+                      context,
+                      listen: false,
+                    );
+                    final helpUrl = settings.getString('help_support_url', '');
+                    if (helpUrl.isNotEmpty) {
+                      try {
+                        final uri = Uri.parse(helpUrl);
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        return;
+                      } catch (_) {}
+                    }
+
+                    final email = settings.getString('support_email', 'support@rewardmobi.xyz');
+                    final siteName = settings.getString('site_name', 'Rupi Rewards');
+                    try {
+                      final uri = Uri(
+                        scheme: 'mailto',
+                        path: email,
+                        queryParameters: {
+                          'subject': '$siteName - Contact Support',
+                        },
+                      );
+                      await launchUrl(uri);
+                    } catch (_) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Contact us at $email')),
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      'Contact Support',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -506,4 +549,3 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
-

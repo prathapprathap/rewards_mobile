@@ -145,7 +145,7 @@ class RewardCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  'Earned ₹${reward.earnedAmount.toStringAsFixed(0)}',
+                                  'Earned ₹${reward.earnedAmount.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     color: AppColors.success,
                                     fontSize: 13,

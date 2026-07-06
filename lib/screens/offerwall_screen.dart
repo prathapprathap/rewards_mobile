@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'offer_detail_screen.dart';
 import '../constants/colors.dart';
@@ -6,6 +7,14 @@ import '../models/offer_model.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/ui/rupi_ui.dart';
+
+/// Formats a reward amount, dropping the decimals when it is a whole number
+/// (e.g. 90.0 → "90", 0.1 → "0.1").
+String _formatAmount(double value) {
+  return value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
+}
 
 class OfferwallScreen extends StatefulWidget {
   const OfferwallScreen({super.key});
@@ -235,12 +244,16 @@ class _OfferCard extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                width: 1.5,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadowLight,
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: AppColors.primary.withValues(alpha: 0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -259,16 +272,23 @@ class _OfferCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Offer icon / image
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: offer.imageUrl != null
-                            ? Image.network(
-                                offer.imageUrl!,
-                                width: 64,
-                                height: 64,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    _placeholderIcon(index),
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryFixed.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child:
+                            (offer.imageUrl != null && offer.imageUrl!.isNotEmpty)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Image.network(
+                                  offer.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _placeholderIcon(index),
+                                ),
                               )
                             : _placeholderIcon(index),
                       ),
@@ -280,10 +300,11 @@ class _OfferCard extends StatelessWidget {
                           children: [
                             Text(
                               offer.offerName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: AppColors.textPrimary,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: AppColors.onSurface,
+                                letterSpacing: -0.2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -291,39 +312,49 @@ class _OfferCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               offer.heading,
-                              style: const TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: AppColors.textSecondary,
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.3,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             // Reward badge
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
+                                horizontal: 12,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                gradient: AppColors.accentGradient,
-                                borderRadius: BorderRadius.circular(20),
+                                gradient: AppColors.primaryGradient,
+                                borderRadius: BorderRadius.circular(99),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
                               child: Text(
-                                'Earn ${offer.currencySymbol}${offer.amount.toStringAsFixed(2)}',
-                                style: const TextStyle(
+                                'Earn ${offer.currencySymbol}${_formatAmount(offer.amount)}',
+                                style: GoogleFonts.plusJakartaSans(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12.5,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textTertiary,
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.outline,
                       ),
                     ],
                   ),
@@ -331,11 +362,14 @@ class _OfferCard extends StatelessWidget {
 
                 // Events progress strip (only if multi-event offer)
                 if (totalEvents > 0) ...[
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(
+                    height: 1,
+                    color: AppColors.primary.withValues(alpha: 0.06),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 10,
+                      vertical: 12,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,34 +379,35 @@ class _OfferCard extends StatelessWidget {
                           children: [
                             Text(
                               '$completedEvents / $totalEvents milestones',
-                              style: const TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
+                                color: AppColors.onSurfaceVariant,
                               ),
                             ),
                             Text(
                               '${(progress * 100).toStringAsFixed(0)}%',
-                              style: TextStyle(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 color: progress == 1.0
                                     ? AppColors.success
-                                    : AppColors.accent,
+                                    : AppColors.primary,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(99),
                           child: LinearProgressIndicator(
                             value: progress,
-                            backgroundColor: AppColors.border,
+                            backgroundColor:
+                                AppColors.primary.withValues(alpha: 0.08),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               progress == 1.0
                                   ? AppColors.success
-                                  : AppColors.accent,
+                                  : AppColors.primary,
                             ),
                             minHeight: 6,
                           ),
@@ -415,7 +450,7 @@ class _OfferCard extends StatelessWidget {
                 ),
                 child: Text(
                   sideLabel.toUpperCase(),
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                     fontSize: 10,
@@ -437,16 +472,16 @@ class _OfferCard extends StatelessWidget {
       Color(0xFFFFBE0B),
     ];
     return Container(
-      width: 64,
-      height: 64,
+      width: 60,
+      height: 60,
       decoration: BoxDecoration(
         color: colors[index % colors.length].withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Icon(
         Icons.card_giftcard_rounded,
         color: colors[index % colors.length],
-        size: 32,
+        size: 30,
       ),
     );
   }
@@ -464,16 +499,16 @@ class _EventChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: event.isCompleted
             ? AppColors.success.withValues(alpha: 0.1)
-            : AppColors.accentLight,
-        borderRadius: BorderRadius.circular(20),
+            : AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(99),
         border: Border.all(
           color: event.isCompleted
               ? AppColors.success.withValues(alpha: 0.4)
-              : AppColors.accent.withValues(alpha: 0.3),
+              : AppColors.primary.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -484,26 +519,26 @@ class _EventChip extends StatelessWidget {
                 ? Icons.check_circle_rounded
                 : Icons.radio_button_unchecked_rounded,
             size: 12,
-            color: event.isCompleted ? AppColors.success : AppColors.accent,
+            color: event.isCompleted ? AppColors.success : AppColors.primary,
           ),
           const SizedBox(width: 4),
           Text(
             event.eventName,
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: event.isCompleted ? AppColors.success : AppColors.accent,
+              fontWeight: FontWeight.w800,
+              color: event.isCompleted ? AppColors.success : AppColors.primary,
             ),
           ),
           const SizedBox(width: 4),
           Text(
-            '${event.currencySymbol}${event.points}',
-            style: TextStyle(
+            '${event.currencySymbol}${_formatAmount(event.points)}',
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: event.isCompleted
                   ? AppColors.success
-                  : AppColors.textSecondary,
+                  : AppColors.onSurfaceVariant,
             ),
           ),
         ],

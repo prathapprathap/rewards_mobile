@@ -584,7 +584,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDailyTasksList() {
-    final tasks = _offers.take(5).toList();
+    final tasks = _offers.toList();
     if (tasks.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(top: 8),

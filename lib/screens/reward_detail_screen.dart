@@ -355,7 +355,7 @@ class RewardDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '+₹${earned.toStringAsFixed(0)}',
+                      '+₹${earned.toStringAsFixed(2)}',
                       style: const TextStyle(
                         color: AppColors.success,
                         fontSize: 13,
@@ -427,7 +427,7 @@ class RewardDetailScreen extends StatelessWidget {
               const Icon(Icons.check_circle, color: AppColors.success, size: 22),
               const SizedBox(width: 10),
               Text(
-                'Reward Received  ₹${reward.earnedAmount.toStringAsFixed(0)}',
+                'Reward Received  ₹${reward.earnedAmount.toStringAsFixed(2)}',
                 style: const TextStyle(
                   color: AppColors.success,
                   fontWeight: FontWeight.bold,

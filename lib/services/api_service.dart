@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
@@ -692,13 +693,15 @@ class ApiService {
 
   Future<void> registerFcmToken(int userId, String token) async {
     try {
-      await http.post(
+      final res = await http.post(
         Uri.parse('${ApiConstants.baseUrl}/users/$userId/fcm-token'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'token': token}),
       );
+      debugPrint(
+          'registerFcmToken → ${ApiConstants.baseUrl} status=${res.statusCode}');
     } catch (e) {
-      // ignore — non-blocking
+      debugPrint('registerFcmToken failed: $e');
     }
   }
 

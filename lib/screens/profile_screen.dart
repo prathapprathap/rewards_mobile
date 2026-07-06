@@ -238,6 +238,15 @@ class ProfileScreen extends StatelessWidget {
                 context,
                 listen: false,
               );
+              final helpUrl = settings.getString('help_support_url', '');
+              if (helpUrl.isNotEmpty) {
+                try {
+                  final uri = Uri.parse(helpUrl);
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  return;
+                } catch (_) {}
+              }
+
               final email = settings.getString('support_email', 'support@rewardmobi.xyz');
               final siteName = settings.getString('site_name', 'Rupi Rewards');
               try {

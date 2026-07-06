@@ -318,7 +318,9 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildTransactionCard(dynamic tx) {
     final String type = tx['transaction_type'] ?? 'reward';
-    final String description = tx['description'] ?? 'Activity reward';
+    String description = tx['description'] ?? 'Activity reward';
+    // Hide the referral commission percentage from users (e.g. "50% ").
+    description = description.replaceAll(RegExp(r'\s*\d+(\.\d+)?%\s*'), ' ').trim();
     final double amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
     final String status = tx['status']?.toString().toLowerCase() ?? 'success';
     final String? imageUrl = tx['offer_image'];
@@ -422,7 +424,7 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           Text(
-            '${positive ? '+' : ''}₹${amount.abs().toStringAsFixed(0)}',
+            '${positive ? '+' : ''}₹${amount.abs().toStringAsFixed(2)}',
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w900,
               fontSize: 17,
