@@ -11,7 +11,9 @@ import '../widgets/ui/rupi_ui.dart';
 import '../providers/settings_provider.dart';
 
 class WithdrawalScreen extends StatefulWidget {
-  const WithdrawalScreen({super.key});
+  final String method;
+
+  const WithdrawalScreen({super.key, required this.method});
 
   @override
   State<WithdrawalScreen> createState() => _WithdrawalScreenState();
@@ -26,12 +28,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   final _ifscController = TextEditingController();
   final _bankNameController = TextEditingController();
   final _mobileController = TextEditingController();
-  String _selectedMethod = 'UPI';
+  late final String _selectedMethod = widget.method;
   bool _isSubmitting = false;
   // Mobile is collected only the first time; reused for later withdrawals.
   bool _needsMobile = true;
-
-  final List<String> _methods = [];
 
   bool get _isBank => _selectedMethod == 'Bank Transfer';
 
@@ -44,23 +44,6 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     }
     final savedMobile = user?.mobile?.trim() ?? '';
     _needsMobile = savedMobile.isEmpty;
-
-    final settings = Provider.of<SettingsProvider>(context, listen: false);
-    final upiEnabled = settings.getString('withdraw_method_upi', 'On') == 'On';
-    final bankEnabled = settings.getString('withdraw_method_bank', 'On') == 'On';
-
-    if (upiEnabled) {
-      _methods.add('UPI');
-    }
-    if (bankEnabled) {
-      _methods.add('Bank Transfer');
-    }
-    if (_methods.isEmpty) {
-      _methods.add('UPI');
-    }
-    if (!_methods.contains(_selectedMethod)) {
-      _selectedMethod = _methods.first;
-    }
   }
 
   @override
@@ -226,7 +209,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             const SizedBox(height: 28),
             const RupiSectionHeader(
                 title: 'Withdrawal details', icon: Icons.south_west_rounded),
-            _buildMethodSelector(),
+            _buildMethodBadge(),
             const SizedBox(height: 24),
             _buildTextField(
               controller: _amountController,
@@ -327,32 +310,28 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     );
   }
 
-  Widget _buildMethodSelector() {
+  Widget _buildMethodBadge() {
+    final icon = _isBank ? Icons.account_balance_rounded : Icons.smartphone_rounded;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedMethod,
-          isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
-          items: _methods.map((String method) {
-            return DropdownMenuItem<String>(
-              value: method,
-              child: Text(
-                method,
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              ),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) setState(() => _selectedMethod = value);
-          },
-        ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 20),
+          const SizedBox(width: 10),
+          Text(
+            _selectedMethod,
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: AppColors.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }

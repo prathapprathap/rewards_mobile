@@ -7,6 +7,7 @@ import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/ui/rupi_ui.dart';
+import '../widgets/payment_method_sheet.dart';
 import 'transaction_history_screen.dart';
 import 'withdrawal_screen.dart';
 
@@ -48,6 +49,25 @@ class _WalletScreenState extends State<WalletScreen> {
     }
   }
 
+  Future<void> _openWithdrawFlow(BuildContext context) async {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final upiEnabled = settings.getString('withdraw_method_upi', 'On') == 'On';
+    final bankEnabled = settings.getString('withdraw_method_bank', 'On') == 'On';
+
+    final method = await showPaymentMethodSheet(
+      context,
+      upiEnabled: upiEnabled,
+      bankEnabled: bankEnabled,
+    );
+    if (method == null || !context.mounted) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => WithdrawalScreen(method: method)),
+    );
+    if (mounted) _fetchTransactions();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Listen to SettingsProvider for dynamic color updates
@@ -73,7 +93,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   Transform.translate(
                     offset: const Offset(0, -8),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -100,7 +120,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildHeader() {
     return RupiHeader(
-      height: 140,
+      height: 122,
       child: Row(
         children: [
           Text(
@@ -174,10 +194,7 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
           const SizedBox(height: 20),
           GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const WithdrawalScreen()),
-            ).then((_) => _fetchTransactions()),
+            onTap: () => _openWithdrawFlow(context),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 17),

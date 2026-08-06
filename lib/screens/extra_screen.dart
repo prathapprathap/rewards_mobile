@@ -34,7 +34,7 @@ class ExtraScreen extends StatelessWidget {
                 Transform.translate(
                   offset: const Offset(0, -8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -59,7 +59,7 @@ class ExtraScreen extends StatelessWidget {
 
   Widget _buildHeader(dynamic user) {
     return RupiHeader(
-      height: 140,
+      height: 122,
       child: Row(
         children: [
           Text(

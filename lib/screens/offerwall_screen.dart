@@ -99,91 +99,79 @@ class _OfferwallScreenState extends State<OfferwallScreen>
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: NestedScrollView(
-        headerSliverBuilder: (_, __) => [
-          SliverAppBar(
-            expandedHeight: 140,
-            floating: false,
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            automaticallyImplyLeading: false,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(gradient: AppColors.headerGradient),
-                padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.18),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 20,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: _buildHeader(context, user)),
+          SliverFillRemaining(
+            hasScrollBody: true,
+            child: Transform.translate(
+              offset: const Offset(0, -8),
+              child: _isLoading
+                  ? _buildLoader()
+                  : _errorMessage != null
+                  ? _buildError()
+                  : _offers.isEmpty
+                  ? _buildEmpty()
+                  : FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: RefreshIndicator(
+                        onRefresh: _loadOffers,
+                        color: AppColors.accent,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                          itemCount: _offers.length,
+                          itemBuilder: (context, index) {
+                            return _OfferCard(
+                              offer: _offers[index],
+                              index: index,
+                              onTap: () => _showOfferDetail(_offers[index]),
+                            );
+                          },
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      '🎯 Offerwall',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Complete offers & earn rewards',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ],
-        body: _isLoading
-            ? _buildLoader()
-            : _errorMessage != null
-            ? _buildError()
-            : _offers.isEmpty
-            ? _buildEmpty()
-            : FadeTransition(
-                opacity: _fadeAnimation,
-                child: RefreshIndicator(
-                  onRefresh: _loadOffers,
-                  color: AppColors.accent,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                    itemCount: _offers.length,
-                    itemBuilder: (context, index) {
-                      return _OfferCard(
-                        offer: _offers[index],
-                        index: index,
-                        onTap: () => _showOfferDetail(_offers[index]),
-                      );
-                    },
-                  ),
-                ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, dynamic user) {
+    final canGoBack = Navigator.of(context).canPop();
+    return RupiHeader(
+      height: 122,
+      child: Row(
+        children: [
+          if (canGoBack) ...[
+            GestureDetector(
+              onTap: () => Navigator.of(context).maybePop(),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.arrow_back_rounded,
+                    color: Colors.white, size: 26),
               ),
+            ),
+          ],
+          Text(
+            'Offerwall',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const Spacer(),
+          RupiBalancePill(
+            amount: (user?.walletBalance ?? 0.00).toStringAsFixed(2),
+          ),
+        ],
       ),
     );
   }
@@ -241,10 +229,10 @@ class _OfferCard extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(19),
               border: Border.all(
                 color: AppColors.primary.withValues(alpha: 0.06),
                 width: 1.5,
@@ -263,26 +251,26 @@ class _OfferCard extends StatelessWidget {
                 // Header row
                 Padding(
                   padding: EdgeInsets.fromLTRB(
-                    16,
-                    hasSideLabel ? 28 : 16,
-                    16,
-                    16,
+                    13,
+                    hasSideLabel ? 20 : 10,
+                    13,
+                    10,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Offer icon / image
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: 48,
+                        height: 36,
                         decoration: BoxDecoration(
                           color: AppColors.primaryFixed.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child:
                             (offer.imageUrl != null && offer.imageUrl!.isNotEmpty)
                             ? ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(14),
                                 child: Image.network(
                                   offer.imageUrl!,
                                   fit: BoxFit.cover,
@@ -292,7 +280,7 @@ class _OfferCard extends StatelessWidget {
                               )
                             : _placeholderIcon(index),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       // Offer info
                       Expanded(
                         child: Column(
@@ -302,30 +290,30 @@ class _OfferCard extends StatelessWidget {
                               offer.offerName,
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: AppColors.onSurface,
                                 letterSpacing: -0.2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               offer.heading,
                               style: GoogleFonts.inter(
-                                fontSize: 13,
+                                fontSize: 11.5,
                                 color: AppColors.onSurfaceVariant,
                                 height: 1.3,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             // Reward badge
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 10,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
                                 gradient: AppColors.primaryGradient,
@@ -344,14 +332,14 @@ class _OfferCard extends StatelessWidget {
                                 style: GoogleFonts.plusJakartaSans(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 12.5,
+                                  fontSize: 11,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Icon(
                         Icons.chevron_right_rounded,
                         color: AppColors.outline,
@@ -472,16 +460,16 @@ class _OfferCard extends StatelessWidget {
       Color(0xFFFFBE0B),
     ];
     return Container(
-      width: 60,
-      height: 60,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         color: colors[index % colors.length].withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Icon(
         Icons.card_giftcard_rounded,
         color: colors[index % colors.length],
-        size: 30,
+        size: 24,
       ),
     );
   }

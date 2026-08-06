@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.reward.server
 
 import io.flutter.embedding.android.FlutterActivity
 

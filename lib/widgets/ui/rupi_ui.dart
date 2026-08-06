@@ -225,11 +225,12 @@ class RupiHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.of(context).padding.top;
     return ClipPath(
       clipper: _BottomCurveClipper(),
       child: Container(
         width: double.infinity,
-        height: height,
+        height: height + topInset,
         decoration: BoxDecoration(gradient: AppColors.headerGradient),
         child: Stack(
           children: [

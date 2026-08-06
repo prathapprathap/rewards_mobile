@@ -90,7 +90,7 @@ class _ReferScreenState extends State<ReferScreen> {
                 Transform.translate(
                   offset: const Offset(0, -8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -168,7 +168,7 @@ class _ReferScreenState extends State<ReferScreen> {
   Widget _buildHeader(BuildContext context, dynamic user) {
     final canGoBack = Navigator.of(context).canPop();
     return RupiHeader(
-      height: 140,
+      height: 122,
       child: Row(
         children: [
           if (canGoBack) ...[

@@ -203,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Transform.translate(
                     offset: const Offset(0, -8),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                       child: _buildQuickActions(),
                     ),
                   ),
@@ -245,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ? user!.name.toString().split(' ').first
         : 'there';
     return RupiHeader(
-      height: 224,
+      height: 196,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 42),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -44,7 +44,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildProfileHeader(dynamic user) {
     return RupiHeader(
-      height: 290,
+      height: 255,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 44),
       child: Column(
         children: [
@@ -135,20 +135,26 @@ class ProfileScreen extends StatelessWidget {
                 context,
                 listen: false,
               );
-              // Try app-specific Play Store URL from settings, fallback to package name
+              // Use admin-configured rate-us link if set, else fall back to
+              // a Play Store URL built from the package name.
+              final rateUsUrl = settings.getString('rate_us_url', '');
               final packageName = settings.getString('app_package_name', '');
-              final storeUrl = packageName.isNotEmpty
-                  ? 'market://details?id=$packageName'
-                  : 'https://play.google.com/store/apps';
+              final storeUrl = rateUsUrl.isNotEmpty
+                  ? rateUsUrl
+                  : packageName.isNotEmpty
+                      ? 'market://details?id=$packageName'
+                      : 'https://play.google.com/store/apps';
               try {
                 final uri = Uri.parse(storeUrl);
                 final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
                 if (!launched) {
                   // Fallback to web Play Store
                   final webUri = Uri.parse(
-                    packageName.isNotEmpty
-                        ? 'https://play.google.com/store/apps/details?id=$packageName'
-                        : 'https://play.google.com/store/apps',
+                    rateUsUrl.isNotEmpty
+                        ? rateUsUrl
+                        : packageName.isNotEmpty
+                            ? 'https://play.google.com/store/apps/details?id=$packageName'
+                            : 'https://play.google.com/store/apps',
                   );
                   await launchUrl(webUri, mode: LaunchMode.externalApplication);
                 }
