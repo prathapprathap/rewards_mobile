@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -32,7 +33,7 @@ class ApiService {
         Uri.parse(ApiConstants.loginEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 20));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
@@ -40,6 +41,8 @@ class ApiService {
       } else {
         throw Exception('Failed to login: ${response.body}');
       }
+    } on TimeoutException {
+      throw Exception('Login timed out. Please check your connection and try again.');
     } catch (e) {
       throw Exception('Error connecting to server: $e');
     }

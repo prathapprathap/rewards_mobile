@@ -301,10 +301,11 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
   Future<void> _handleSuccessfulSignIn(GoogleSignInAccount account) async {
     if (_isHandlingSignIn) return;
     _isHandlingSignIn = true;
+    if (mounted) setState(() => _isLoading = true);
     try {
       final provider = Provider.of<UserProvider>(context, listen: false);
       final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-      
+
       await provider.login(
         account.id,
         account.email,
@@ -312,7 +313,7 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
         account.photoUrl,
         referralCode: _autoDetectedCode,
       );
-      
+
       // Refresh settings upon login to detect latest branding colors
       await settingsProvider.loadSettings();
 
@@ -325,6 +326,7 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
       _showError(_parseError(e.toString()));
     } finally {
       _isHandlingSignIn = false;
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
