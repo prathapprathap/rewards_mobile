@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -14,7 +15,47 @@ class UserProvider with ChangeNotifier {
   User? get user => _user;
   bool get isLoading => _isLoading;
 
-  Future<String?> _getDeviceId() async {
+  /// Old fingerprint (model+device+brand+build-id) collided across every
+  /// phone of the same model/firmware, silently locking unrelated users out
+  /// of each other's accounts. Existing accounts already have this value
+  /// stored server-side, so it's always tried FIRST on every login attempt
+  /// (this also correctly re-matches existing users after a reinstall).
+  static const _legacyDeviceIdKey = 'device_id_legacy_v1';
+
+  /// Random per-install UUID, unique regardless of model/firmware. Only sent
+  /// as a fallback when the backend confirms the legacy fingerprint collides
+  /// with a genuinely different account (DEVICE_ALREADY_REGISTERED) — i.e.
+  /// this is really a new signup, not an existing user's device.
+  static const _installDeviceIdKey = 'device_id_install_uuid_v2';
+
+  Future<String?> _legacyDeviceId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? legacyId = prefs.getString(_legacyDeviceIdKey);
+      if (legacyId == null) {
+        legacyId = await _computeLegacyFingerprint();
+        if (legacyId != null) {
+          await prefs.setString(_legacyDeviceIdKey, legacyId);
+        }
+      }
+      return legacyId;
+    } catch (e) {
+      print('Error getting device ID: $e');
+    }
+    return null;
+  }
+
+  Future<String> _installDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? installId = prefs.getString(_installDeviceIdKey);
+    if (installId == null) {
+      installId = _generateUuidV4();
+      await prefs.setString(_installDeviceIdKey, installId);
+    }
+    return installId;
+  }
+
+  Future<String?> _computeLegacyFingerprint() async {
     final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     try {
       if (kIsWeb) {
@@ -22,7 +63,6 @@ class UserProvider with ChangeNotifier {
         return webInfo.userAgent;
       } else if (Platform.isAndroid) {
         final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        // Create fingerprint from multiple properties
         final fingerprint = '${androidInfo.model}_${androidInfo.device}_${androidInfo.brand}_${androidInfo.id}';
         return fingerprint.hashCode.toString();
       } else if (Platform.isIOS) {
@@ -30,9 +70,19 @@ class UserProvider with ChangeNotifier {
         return iosInfo.identifierForVendor;
       }
     } catch (e) {
-      print('Error getting device ID: $e');
+      print('Error computing legacy device fingerprint: $e');
     }
     return null;
+  }
+
+  String _generateUuidV4() {
+    final rng = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0F) | 0x40; // version 4
+    bytes[8] = (bytes[8] & 0x3F) | 0x80; // variant 10xx
+    String hex(int start, int end) =>
+        bytes.sublist(start, end).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex(0, 4)}-${hex(4, 6)}-${hex(6, 8)}-${hex(8, 10)}-${hex(10, 16)}';
   }
 
   Future<void> login(String googleId, String email, String? name, String? photoUrl, {String? referralCode}) async {
@@ -40,22 +90,41 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final deviceId = await _getDeviceId();
-      _user = await _apiService.loginWithGoogle(
-        googleId: googleId,
-        email: email,
-        name: name,
-        profilePic: photoUrl,
-        deviceId: deviceId,
-        referralCode: referralCode,
-      );
-      
+      final legacyDeviceId = await _legacyDeviceId();
+      try {
+        _user = await _apiService.loginWithGoogle(
+          googleId: googleId,
+          email: email,
+          name: name,
+          profilePic: photoUrl,
+          deviceId: legacyDeviceId,
+          referralCode: referralCode,
+        );
+      } on LoginException catch (e) {
+        // The legacy fingerprint collides with a DIFFERENT existing account
+        // (same model+firmware, not actually the same phone) — this is a
+        // genuinely new signup, so retry once with a unique per-install id.
+        if (e.errorCode == 'DEVICE_ALREADY_REGISTERED') {
+          final installDeviceId = await _installDeviceId();
+          _user = await _apiService.loginWithGoogle(
+            googleId: googleId,
+            email: email,
+            name: name,
+            profilePic: photoUrl,
+            deviceId: installDeviceId,
+            referralCode: referralCode,
+          );
+        } else {
+          rethrow;
+        }
+      }
+
       // Save user ID to shared prefs for auto-login
       final prefs = await SharedPreferences.getInstance();
       if (_user != null) {
         await prefs.setInt('userId', _user!.id);
       }
-      
+
     } catch (e) {
       print('Login error: $e');
       rethrow;

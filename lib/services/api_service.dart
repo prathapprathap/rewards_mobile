@@ -9,7 +9,20 @@ import '../models/user_model.dart';
 import '../models/offer_model.dart';
 import 'api_cache.dart';
 
+/// Login failure carrying the backend's `error_code`, so callers can branch
+/// on it (e.g. retry with a different device_id on DEVICE_ALREADY_REGISTERED)
+/// instead of only having a human-readable message.
+class LoginException implements Exception {
+  final String message;
+  final String? errorCode;
+  LoginException(this.message, {this.errorCode});
+  @override
+  String toString() => message;
+}
+
 class ApiService {
+  static const _defaultTimeout = Duration(seconds: 20);
+
   Future<User> loginWithGoogle({
     required String googleId,
     required String email,
@@ -33,16 +46,25 @@ class ApiService {
         Uri.parse(ApiConstants.loginEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(_defaultTimeout);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         return User.fromJson(data['user']);
       } else {
-        throw Exception('Failed to login: ${response.body}');
+        Map<String, dynamic>? data;
+        try {
+          data = jsonDecode(response.body) as Map<String, dynamic>;
+        } catch (_) {}
+        throw LoginException(
+          (data?['message'] as String?) ?? 'Failed to login: ${response.body}',
+          errorCode: data?['error_code'] as String?,
+        );
       }
     } on TimeoutException {
       throw Exception('Login timed out. Please check your connection and try again.');
+    } on LoginException {
+      rethrow;
     } catch (e) {
       throw Exception('Error connecting to server: $e');
     }
@@ -52,7 +74,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('${ApiConstants.userProfileEndpoint}/$id'),
-      );
+      ).timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -60,6 +82,8 @@ class ApiService {
       } else {
         throw Exception('Failed to load profile');
       }
+    } on TimeoutException {
+      throw Exception('Loading profile timed out. Please check your connection and try again.');
     } catch (e) {
       throw Exception('Error fetching profile: $e');
     }
@@ -67,9 +91,9 @@ class ApiService {
 
   Future<List<dynamic>> getUserOffers(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -83,11 +107,13 @@ class ApiService {
 
   Future<Map<String, dynamic>> scratchOffer(int userId, int offerId) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/scratch-offer'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'offer_id': offerId}),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/users/$userId/scratch-offer'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'offer_id': offerId}),
+          )
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -101,7 +127,9 @@ class ApiService {
 
   Future<List<dynamic>> getTasks() async {
     try {
-      final response = await http.get(Uri.parse(ApiConstants.tasksEndpoint));
+      final response = await http
+          .get(Uri.parse(ApiConstants.tasksEndpoint))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -117,9 +145,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> getUserSpins(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/spins'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/spins'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -133,9 +161,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> useSpin(int userId) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/use-spin'),
-      );
+      final response = await http
+          .post(Uri.parse('${ApiConstants.baseUrl}/users/$userId/use-spin'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -149,9 +177,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> getAppSettings() async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/users/app/settings'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/users/app/settings'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final List<dynamic> settingsList = jsonDecode(response.body);
@@ -163,6 +191,8 @@ class ApiService {
       } else {
         throw Exception('Failed to load app settings');
       }
+    } on TimeoutException {
+      throw Exception('Loading app settings timed out. Please check your connection and try again.');
     } catch (e) {
       throw Exception('Error fetching app settings: $e');
     }
@@ -180,12 +210,14 @@ class ApiService {
       key: userId != null ? 'offerwall_offers_$userId' : 'offerwall_offers',
       ttl: ttl,
       fetch: () async {
-        final res = await http.get(
-          Uri.parse(
-            '${ApiConstants.baseUrl}/offers/offerwall'
-            '${userId != null ? '?userId=$userId' : ''}',
-          ),
-        );
+        final res = await http
+            .get(
+              Uri.parse(
+                '${ApiConstants.baseUrl}/offers/offerwall'
+                '${userId != null ? '?userId=$userId' : ''}',
+              ),
+            )
+            .timeout(_defaultTimeout);
         if (res.statusCode != 200) throw Exception('offerwall failed');
         return res.body;
       },
@@ -207,9 +239,9 @@ class ApiService {
       key: 'banners',
       ttl: ttl,
       fetch: () async {
-        final res = await http.get(
-          Uri.parse('${ApiConstants.baseUrl}/offer18/banners'),
-        );
+        final res = await http
+            .get(Uri.parse('${ApiConstants.baseUrl}/offer18/banners'))
+            .timeout(_defaultTimeout);
         if (res.statusCode != 200) throw Exception('banners failed');
         return res.body;
       },
@@ -230,9 +262,9 @@ class ApiService {
       key: 'user_offers_$userId',
       ttl: ttl,
       fetch: () async {
-        final res = await http.get(
-          Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers'),
-        );
+        final res = await http
+            .get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers'))
+            .timeout(_defaultTimeout);
         if (res.statusCode != 200) throw Exception('user offers failed');
         return res.body;
       },
@@ -247,11 +279,13 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> redeemPromoCode(int userId, String code) async {
-    final response = await http.post(
-      Uri.parse('${ApiConstants.baseUrl}/users/promo/$userId/redeem'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'code': code}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${ApiConstants.baseUrl}/users/promo/$userId/redeem'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'code': code}),
+        )
+        .timeout(_defaultTimeout);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -262,9 +296,9 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getReferralStats(int userId) async {
-    final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/users/$userId/referral-stats'),
-    );
+    final response = await http
+        .get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/referral-stats'))
+        .timeout(_defaultTimeout);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -276,11 +310,13 @@ class ApiService {
     int userId,
     String code,
   ) async {
-    final response = await http.post(
-      Uri.parse('${ApiConstants.baseUrl}/users/$userId/apply-referral'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'referral_code': code}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${ApiConstants.baseUrl}/users/$userId/apply-referral'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'referral_code': code}),
+        )
+        .timeout(_defaultTimeout);
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) {
       return data;
@@ -311,9 +347,9 @@ class ApiService {
   /// Fetches the full list of active offerwall offers (with their events).
   Future<List<Offer>> getOfferwallOffers() async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/offers/offerwall'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/offers/offerwall'))
+          .timeout(_defaultTimeout);
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data
@@ -335,7 +371,7 @@ class ApiService {
         '${ApiConstants.baseUrl}/offers/$offerId/events'
         '${userId != null ? '?userId=$userId' : ''}',
       );
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(_defaultTimeout);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List<dynamic> events = data['events'] ?? [];
@@ -360,15 +396,17 @@ class ApiService {
       // Auto-resolve device ID if not provided
       final resolvedDeviceId = deviceId ?? await getDeviceId();
 
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/offer18/track-click'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'userId': userId,
-          'offerId': offerId,
-          'deviceId': resolvedDeviceId,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/offer18/track-click'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'userId': userId,
+              'offerId': offerId,
+              'deviceId': resolvedDeviceId,
+            }),
+          )
+          .timeout(_defaultTimeout);
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -383,9 +421,9 @@ class ApiService {
   /// Get click history for user
   Future<List<dynamic>> getClickHistory(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/offer18/clicks/$userId'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/offer18/clicks/$userId'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -401,9 +439,9 @@ class ApiService {
   /// Get wallet breakdown (coins, gems, cash)
   Future<Map<String, dynamic>> getWalletBreakdown(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/offer18/wallet/$userId'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/offer18/wallet/$userId'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -423,11 +461,13 @@ class ApiService {
     int offset = 0,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse(
-          '${ApiConstants.baseUrl}/offer18/transactions/$userId?limit=$limit&offset=$offset',
-        ),
-      );
+      final response = await http
+          .get(
+            Uri.parse(
+              '${ApiConstants.baseUrl}/offer18/transactions/$userId?limit=$limit&offset=$offset',
+            ),
+          )
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -443,9 +483,9 @@ class ApiService {
   /// Get active banners for home screen
   Future<List<dynamic>> getBanners() async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/offer18/banners'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/offer18/banners'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -518,11 +558,13 @@ class ApiService {
     int offerId,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/scratch-offer'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'offer_id': offerId}),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/users/$userId/scratch-offer'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'offer_id': offerId}),
+          )
+          .timeout(_defaultTimeout);
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -537,9 +579,9 @@ class ApiService {
   /// Get offer details with steps
   Future<Map<String, dynamic>> getOfferDetails(int offerId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/offers/$offerId'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/offers/$offerId'))
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -559,16 +601,18 @@ class ApiService {
     required List<String> imageBase64DataUrls,
     required String contactInfo,
   }) async {
-    final response = await http.post(
-      Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submissions'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'image_files': imageBase64DataUrls,
-        // Backwards-compat with older backends expecting a single image
-        'image_file': imageBase64DataUrls.isNotEmpty ? imageBase64DataUrls.first : null,
-        'contact_info': contactInfo,
-      }),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submissions'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'image_files': imageBase64DataUrls,
+            // Backwards-compat with older backends expecting a single image
+            'image_file': imageBase64DataUrls.isNotEmpty ? imageBase64DataUrls.first : null,
+            'contact_info': contactInfo,
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = jsonDecode(response.body);
     if (response.statusCode == 201 || response.statusCode == 200) {
       return data is Map<String, dynamic> ? data : {};
@@ -583,9 +627,9 @@ class ApiService {
     required int userId,
     required int offerId,
   }) async {
-    final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submission'),
-    );
+    final response = await http
+        .get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/offers/$offerId/submission'))
+        .timeout(_defaultTimeout);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data is Map<String, dynamic> && data['submission'] != null) {
@@ -598,11 +642,13 @@ class ApiService {
   /// Daily check-in
   Future<Map<String, dynamic>> dailyCheckIn(int userId) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/wallet/checkin'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': userId}),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/wallet/checkin'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'userId': userId}),
+          )
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -618,9 +664,9 @@ class ApiService {
   /// Daily check-in history
   Future<Map<String, dynamic>> getCheckInHistory(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/wallet/checkin-history/$userId'),
-      );
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/wallet/checkin-history/$userId'))
+          .timeout(_defaultTimeout);
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
@@ -640,17 +686,19 @@ class ApiService {
     String? mobile,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/wallet/withdraw'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'userId': userId,
-          'amount': amount,
-          'method': method,
-          'details': details,
-          if (mobile != null && mobile.isNotEmpty) 'mobile': mobile,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/wallet/withdraw'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'userId': userId,
+              'amount': amount,
+              'method': method,
+              'details': details,
+              if (mobile != null && mobile.isNotEmpty) 'mobile': mobile,
+            }),
+          )
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -665,11 +713,13 @@ class ApiService {
 
   Future<void> updatePayoutDetails(int userId, String upiId) async {
     try {
-      final response = await http.put(
-        Uri.parse('${ApiConstants.userProfileEndpoint}/$userId/payout'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'upi_id': upiId}),
-      );
+      final response = await http
+          .put(
+            Uri.parse('${ApiConstants.userProfileEndpoint}/$userId/payout'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'upi_id': upiId}),
+          )
+          .timeout(_defaultTimeout);
 
       if (response.statusCode != 200) {
         throw Exception('Failed to update payout details');
@@ -683,9 +733,9 @@ class ApiService {
 
   /// Returns maintenance + update state for the given app [version].
   Future<Map<String, dynamic>> versionCheck(String version) async {
-    final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/users/app/version-check?version=$version'),
-    );
+    final response = await http
+        .get(Uri.parse('${ApiConstants.baseUrl}/users/app/version-check?version=$version'))
+        .timeout(_defaultTimeout);
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
@@ -696,11 +746,13 @@ class ApiService {
 
   Future<void> registerFcmToken(int userId, String token) async {
     try {
-      final res = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/users/$userId/fcm-token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'token': token}),
-      );
+      final res = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/users/$userId/fcm-token'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': token}),
+          )
+          .timeout(_defaultTimeout);
       debugPrint(
           'registerFcmToken → ${ApiConstants.baseUrl} status=${res.statusCode}');
     } catch (e) {
@@ -714,11 +766,13 @@ class ApiService {
     int userId, {
     String? note,
   }) async {
-    final response = await http.post(
-      Uri.parse('${ApiConstants.baseUrl}/users/$userId/request-deactivation'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'note': note ?? 'Requested via app'}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('${ApiConstants.baseUrl}/users/$userId/request-deactivation'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'note': note ?? 'Requested via app'}),
+        )
+        .timeout(_defaultTimeout);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode == 200) return data;
     throw Exception(data['message'] ?? 'Failed to submit deletion request');

@@ -9,7 +9,6 @@ import '../constants/colors.dart';
 import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
-import 'main_layout.dart';
 import '../widgets/custom_toast.dart';
 import 'package:android_play_install_referrer/android_play_install_referrer.dart';
 
@@ -239,14 +238,19 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
   bool _isLoading = false;
   bool _initialized = false;
   bool _isHandlingSignIn = false;
-  StreamSubscription? _authSubscription;
   String? _autoDetectedCode;
+
+  /// Referrer detection runs in the background from initState so it doesn't
+  /// block the button, but signup awaits this (briefly, capped) right before
+  /// calling login — otherwise a fast tap on a fresh install can race past
+  /// detection and silently sign the user up with no referral code applied.
+  late final Future<void> _playReferrerDetection;
 
   @override
   void initState() {
     super.initState();
     _initializeGoogleSignIn();
-    _tryDetectPlayReferrer();
+    _playReferrerDetection = _tryDetectPlayReferrer();
   }
 
   /// Detects the installation referrer from the Google Play Store (e.g. if the user installed
@@ -275,26 +279,15 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
 
   @override
   void dispose() {
-    _authSubscription?.cancel();
     super.dispose();
   }
 
   Future<void> _initializeGoogleSignIn() async {
     try {
-      await GoogleSignIn.instance.initialize();
-
-      _authSubscription =
-          GoogleSignIn.instance.authenticationEvents.listen((event) {
-        if (mounted &&
-            event is GoogleSignInAuthenticationEventSignIn &&
-            !_isHandlingSignIn) {
-          _handleSuccessfulSignIn(event.user);
-        }
-      });
-
+      await GoogleSignIn.instance.initialize(
+        serverClientId: '460766907792-i4qlh7r22he7r0m0aea6h6ho8jfe49ik.apps.googleusercontent.com',
+      );
       if (mounted) setState(() => _initialized = true);
-
-      GoogleSignIn.instance.attemptLightweightAuthentication();
     } catch (_) {}
   }
 
@@ -303,6 +296,15 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
     _isHandlingSignIn = true;
     if (mounted) setState(() => _isLoading = true);
     try {
+      // Give referrer detection a brief chance to finish before deciding
+      // there's no code — a fast tap right after launch would otherwise
+      // race past it and silently sign up with no referral applied.
+      await _playReferrerDetection.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () {},
+      );
+      if (!mounted) return;
+
       final provider = Provider.of<UserProvider>(context, listen: false);
       final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
 
@@ -317,11 +319,12 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
       // Refresh settings upon login to detect latest branding colors
       await settingsProvider.loadSettings();
 
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainLayout()),
-        );
-      }
+      // Do NOT navigate manually here — AuthWrapper (main.dart) reacts to
+      // UserProvider.notifyListeners() and switches to MainLayout on its own.
+      // Pushing a route here would stack MainLayout on top of AuthWrapper
+      // instead of replacing it, so popping back (e.g. Android back button)
+      // reveals a stale AuthWrapper still showing LoginScreen — causing a
+      // silent login loop with no error.
     } catch (e) {
       _showError(_parseError(e.toString()));
     } finally {
@@ -339,10 +342,14 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
     }
     setState(() => _isLoading = true);
     try {
-      await GoogleSignIn.instance.authenticate();
+      final account = await GoogleSignIn.instance.authenticate();
+      if (account != null) {
+        await _handleSuccessfulSignIn(account);
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
     } catch (e) {
       _showError(_parseError(e.toString()));
-    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }

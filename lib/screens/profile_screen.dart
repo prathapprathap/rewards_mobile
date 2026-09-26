@@ -355,6 +355,7 @@ class ProfileScreen extends StatelessWidget {
               Navigator.pop(ctx);
               try {
                 await GoogleSignIn.instance.signOut();
+                await GoogleSignIn.instance.disconnect();
               } catch (_) {}
               if (context.mounted) {
                 Provider.of<SettingsProvider>(
