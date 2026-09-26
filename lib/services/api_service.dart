@@ -10,8 +10,8 @@ import '../models/offer_model.dart';
 import 'api_cache.dart';
 
 /// Login failure carrying the backend's `error_code`, so callers can branch
-/// on it (e.g. retry with a different device_id on DEVICE_ALREADY_REGISTERED)
-/// instead of only having a human-readable message.
+/// on it (e.g. DEVICE_ALREADY_REGISTERED, DEVICE_LOCKED) instead of only
+/// having a human-readable message.
 class LoginException implements Exception {
   final String message;
   final String? errorCode;

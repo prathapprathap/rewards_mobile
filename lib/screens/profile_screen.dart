@@ -8,7 +8,6 @@ import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/ui/rupi_ui.dart';
-import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -363,10 +362,11 @@ class ProfileScreen extends StatelessWidget {
                   listen: false,
                 ).loadSettings();
                 Provider.of<UserProvider>(context, listen: false).logout();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+                // Return to the root AuthWrapper, which shows LoginScreen
+                // once user is null and switches back to the app on the
+                // next login. Pushing a new LoginScreen here would remove
+                // AuthWrapper, leaving the next login stuck on this screen.
+                Navigator.of(context).popUntil((route) => route.isFirst);
               }
             },
             child: Text(
