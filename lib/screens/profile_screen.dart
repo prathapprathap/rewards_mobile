@@ -353,8 +353,10 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               try {
+                // signOut only — disconnect() would revoke the app's grant,
+                // making Google re-ask "Agree" and re-send its "You shared
+                // data" email on every login.
                 await GoogleSignIn.instance.signOut();
-                await GoogleSignIn.instance.disconnect();
               } catch (_) {}
               if (context.mounted) {
                 Provider.of<SettingsProvider>(

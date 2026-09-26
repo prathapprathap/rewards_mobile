@@ -9,6 +9,7 @@ import '../constants/colors.dart';
 import '../constants/app_design.dart';
 import '../providers/user_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/api_service.dart' show LoginException;
 import '../widgets/custom_toast.dart';
 import 'package:android_play_install_referrer/android_play_install_referrer.dart';
 
@@ -288,7 +289,29 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
         serverClientId: '460766907792-i4qlh7r22he7r0m0aea6h6ho8jfe49ik.apps.googleusercontent.com',
       );
       if (mounted) setState(() => _initialized = true);
-    } catch (_) {}
+    } catch (_) {
+      return;
+    }
+    _tryLightweightSignIn();
+  }
+
+  /// Shows Google's "Continue as …" bottom sheet over this screen (returning
+  /// users get their previous account; after a logout it asks rather than
+  /// signing in silently). Dismissing it just leaves the normal button.
+  Future<void> _tryLightweightSignIn() async {
+    // Disable the button while the sheet is up so a tap can't start a second,
+    // concurrent Google sign-in.
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      final account = await GoogleSignIn.instance.attemptLightweightAuthentication();
+      if (account != null && mounted) {
+        await _handleSuccessfulSignIn(account);
+      }
+    } catch (_) {
+      // Dismissed / no account / unsupported — the button still works.
+    } finally {
+      if (mounted && !_isHandlingSignIn) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _handleSuccessfulSignIn(GoogleSignInAccount account) async {
@@ -326,7 +349,7 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
       // reveals a stale AuthWrapper still showing LoginScreen — causing a
       // silent login loop with no error.
     } catch (e) {
-      _showError(_parseError(e.toString()));
+      _showError(_errorMessage(e));
     } finally {
       _isHandlingSignIn = false;
       if (mounted) setState(() => _isLoading = false);
@@ -349,22 +372,38 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
         if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
-      _showError(_parseError(e.toString()));
+      _showError(_errorMessage(e));
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String _parseError(String raw) {
-    if (raw.contains('"message":"')) {
-      final start = raw.indexOf('"message":"') + 11;
-      final end = raw.indexOf('"', start);
-      if (end != -1) return raw.substring(start, end);
+  /// User-facing text for a sign-in failure, or null when there's nothing to
+  /// report (the user closed Google's account picker themselves).
+  String? _errorMessage(Object e) {
+    if (e is GoogleSignInException) {
+      switch (e.code) {
+        case GoogleSignInExceptionCode.canceled:
+        case GoogleSignInExceptionCode.interrupted:
+          return null;
+        case GoogleSignInExceptionCode.uiUnavailable:
+          return 'Google Sign-In is not available right now. Please try again.';
+        default:
+          return 'Google Sign-In failed (${e.code.name}). Please try again.';
+      }
+    }
+    // Backend rejections (device already registered, blocked, …) carry the
+    // server's own message.
+    if (e is LoginException) return e.message;
+
+    final raw = e.toString();
+    if (raw.contains('Error connecting to server') || raw.contains('timed out')) {
+      return "Can't reach the server. Check your internet connection and try again.";
     }
     return raw.replaceAll('Exception: ', '').trim();
   }
 
-  void _showError(String msg) {
-    if (!mounted) return;
+  void _showError(String? msg) {
+    if (msg == null || !mounted) return;
     CustomToast.show(
       context,
       msg,
