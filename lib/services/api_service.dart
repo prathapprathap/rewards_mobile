@@ -29,6 +29,7 @@ class ApiService {
     String? name,
     String? profilePic,
     String? deviceId,
+    String? hardwareId,
     String? referralCode,
   }) async {
     try {
@@ -38,6 +39,7 @@ class ApiService {
         'name': name,
         'profile_pic': profilePic,
         'device_id': deviceId,
+        'hardware_id': hardwareId,
       };
       if (referralCode != null && referralCode.isNotEmpty) {
         body['referral_code'] = referralCode;
